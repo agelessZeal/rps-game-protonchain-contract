@@ -2,6 +2,8 @@
 
 // Standard.
 #include <vector>
+#include <map>
+#include <string>
 
 // EOS
 #include <eosio/eosio.hpp>
@@ -10,9 +12,11 @@
 #include <eosio/transaction.hpp>
 
 
+// Local
+#include "constants.hpp"
+
 using namespace eosio;
 using namespace std;
-
 
 
 namespace proton {
@@ -26,61 +30,103 @@ namespace proton {
     static constexpr name none = "none"_n;
     static constexpr name draw = "draw"_n;
 
-    static map<std:string ,map<std:string,uint8_t>> state = {
+    static map<string ,map<string,uint8_t>> state = {
         { "R", {{"R",0},{"P",2},{"S",1}}},
         { "P",{{"P",0},{"R",1},{"S",2}}},
         { "S",{{"R",2},{"P",1},{"S",0}}}
       };
 
-
-    // states['R']['R'] = 0;
-    // states['R']['P'] = 2;
-    // states['R']['S'] = 1;
-    // states['P']['R'] = 1;
-    // states['P']['P'] = 0;
-    // states['P']['S'] = 2;
-    // states['S']['R'] = 2;
-    // states['S']['P'] = 1;
-    // states['S']['S'] = 0;
-
-
         // Declare game data structure.
     struct [[eosio::table]] game
     {
 
-        game() : board(boardWidth * boardHeight, 0){}
+        uint64_t index;
+        uint8_t round_number;
+        uint8_t host_win_count;
+        uint8_t challenger_win_count;
 
-        static constexpr uint16_t boardWidth = 3;
-        static constexpr uint16_t boardHeight = boardWidth;
-        
-        game() : board(boardWidth * boardHeight, 0){}
+        uint8_t stake;
+
+        const uint64_t& starts_at,
+
+        vector<string> choices_of_host;
+        vector<string> choices_of_challenger; 
+
+        bool has_host_made_choice;
+        bool has_challenger_made_choice;
+
+        eosio::public_key host_key;
+        eosio::checksum256 host_txid;
+
+        eosio::public_key challenger_key;
+        eosio::checksum256 challenger_txid;
 
         name challenger;
         name host;
-        name turn;              // = account name of host/ challenger
         name winner = none; // = none/ draw/ name of host/ name of challenger
 
-        std::vector<uint8_t> board;
-
-        // Initialize board with empty cell
-        void initializeBoard()
-        {
-            board.assign(boardWidth * boardHeight, 0);
-        }
 
         // Reset game
         void resetGame()
         {
-            initializeBoard();
-            turn = host;
             winner = "none"_n;
+            round_number = 0; 
+            challenger_win_count = 0;
+            host_win_count = 0;
+
+            choices_of_host.clear();
+            choices_of_challenger.clear();
+            has_host_made_choice =  false;
+            has_challenger_made_choice = false;
         }
 
-        auto primary_key() const { return challenger.value; }
-        EOSLIB_SERIALIZE( game, (challenger)(host)(turn)(winner)(board))
+                // Reset game
+        void newRound()
+        {
+            winner = "none"_n;
+            has_host_made_choice =  false;
+            has_challenger_made_choice = false;
+            round_number += 1;
+        }
+
+
+        auto primary_key() const { return index; }
+        EOSLIB_SERIALIZE( game, (index)(starts_at)(stake)(challenger)(host)(winner)(challenger_win_count)(host_win_count)(choices_of_host)(choices_of_challenger)(host_key)(host_txid)(challenger_key)(challenger_txid))
     };
 
+        // Define the games type which uses the game data structure. 
+    typedef eosio::multi_index<"games"_n, game> games;
 
+    // Declare class method.
+    [[eosio::action]]
+    void create(const name &challenger, name &host);
+    
+    // Declare class method.
+    [[eosio::action]]
+    void restart(const name &challenger, const name &host, const name &by);
+
+    // Declare class method.
+    [[eosio::action]]
+    void close(      
+      const uint64_t& game_id,
+      const name &challenger, 
+      const name &host);
+    
+    // Declare class method.
+    [[eosio::action]]   
+    void join(
+      const uint64_t& game_id,
+      const name &player);
+
+
+    // Declare class method.
+    [[eosio::action]]   
+    void makeChoice(
+       const uint64_t& game_id,
+       const name &player, 
+       const std::string& choice,
+       const eosio::public_key& key,
+       const eosio::signature& signature);
 
     // This function will be called when the contract is notified of incoming or outgoing transfer actions from any contract
     [[eosio::on_notify("*::transfer")]]
@@ -89,36 +135,29 @@ namespace proton {
                         const asset& quantity,
                         const string& memo );
 
-    void delegatebw   ( const name& from,
-                        const name& receiver,
-                        const asset& stake_net_quantity,
-                        const asset& stake_cpu_quantity,
-                        bool transfer );
-    void undelegatebw ( const name& from,
-                        const name& receiver,
-                        const asset& unstake_net_quantity,
-                        const asset& unstake_cpu_quantity );
-    void buyrambytes  ( const name& payer,
-                        const name& receiver,
-                        uint32_t bytes );
 
     // Action wrappers
-    using withdraw_action     = action_wrapper<"withdraw"_n,     &rps::withdraw>;
     using transfer_action     = action_wrapper<"transfer"_n,     &rps::ontransfer>;
-    using delegatebw_action   = action_wrapper<"delegatebw"_n,   &rps::delegatebw>;
-    using undelegatebw_action = action_wrapper<"undelegatebw"_n, &rps::undelegatebw>;
-    using buyrambytes_action  = action_wrapper<"buyrambytes"_n,  &rps::buyrambytes>;
-    using planreceipt_action  = action_wrapper<"planreceipt"_n,  &rps::planreceipt>;
-
-    // Initialize tables from tables.hpp
-    account_table _accounts;
-    plan_table _plans;
-    subscription_table _subscriptions;
 
   private:
-    void add_balance (const name& account, const extended_asset& delta);
-    void substract_balance (const name& account, const extended_asset& delta);
-    void end_subscription(const Subscription& subscription);
-    void transfer_to(const name& to, const extended_asset& balance, const string& memo);
+    name getWinner(const game &currentGame);
+
+    bool isEmptyCell(const uint8_t &cell);
+    bool isValidMove(const uint16_t &row, const uint16_t &column, const std::vector<uint8_t> &board);
+
+    
+    static inline eosio::checksum256 hash_key(eosio::public_key key) {
+      eosio::ecc_public_key public_key_data = std::get<0>(key);
+      return eosio::sha256(public_key_data.data(), public_key_data.size());
+    }
+
+    static inline eosio::checksum256 get_txid () {
+      auto size = eosio::transaction_size();
+      char buf[size];
+      uint32_t read = eosio::read_transaction(buf, size);
+      eosio::check( size == read, "read_transaction failed");
+      return eosio::sha256(buf, size);
+    }
+
   };
 }

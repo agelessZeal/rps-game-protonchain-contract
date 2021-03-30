@@ -26,17 +26,11 @@ namespace proton {
 
     // Add balance
     auto balance_to_add = extended_asset(quantity, token_contract);
-    add_balance(from, balance_to_add);
 
     // Process action
     process(MAX_PROCESS);
   }
 
-  void rps::withdraw (const name& account, const extended_asset& balance) {
-    require_auth(account);
-    substract_balance(account, balance);
-    transfer_to(account, balance, "");
-  }
 
   void rps::transfer_to(const name& to, const extended_asset& balance, const string& memo) {
     transfer_action t_action( balance.contract, {get_self(), "active"_n} );
