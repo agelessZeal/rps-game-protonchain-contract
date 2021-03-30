@@ -7,15 +7,15 @@ namespace proton
       check(challenger != host, "Challenger should not be the same as the host.");
 
       // Check if game already exists
-      games existingHostGames(get_self(), host.value);
-      auto itr = existingHostGames.find(challenger.value);
+
+      auto itr = existingHostGames.find(host.value);
       check(itr == existingHostGames.end(), "Game already exists.");
 
       existingHostGames.emplace(host, [&](auto &g) {
           g.index = existingHostGames.available_primary_key();
           g.challenger = challenger;
           g.host = host;
-          g.turn = host;
+          g.resetGame();
       });
   }
 
@@ -24,7 +24,6 @@ namespace proton
       check(has_auth(by), "Only " + by.to_string() + "can restart the game.");
 
       // Check if game exists
-      games existingHostGames(get_self(), host.value);
       auto itr = existingHostGames.find(challenger.value);
       check(itr != existingHostGames.end(), "Game does not exist.");
 
@@ -44,7 +43,6 @@ namespace proton
       require_auth(host);
 
       // Check if game exists
-      games existingHostGames(get_self(), host.value);
       auto itr = existingHostGames.find(challenger.value);
       check(itr != existingHostGames.end(), "Game does not exist.");
 
@@ -63,111 +61,113 @@ namespace proton
       bool isValid = movementLocation < board.size() && isEmptyCell(board[movementLocation]);
       return isValid;
   }
-  void join(const uint64_t& game_id, const name &player){
+
+  void join(const uint64_t& game_id, const name &challenger){
 
     require_auth(get_self());
+    // Get match
+    auto match_itr = existingHostGames.require_find(game_id, "Game not found.");
 
-    // Get poll
-    auto poll = existingHostGames.require_find(poll_id, "Poll not found.");
+    eosio::check(match_itr->challenger != none , "This match is full now");
+
+    existingHostGames.modify(match_itr, get_self(), [&](auto& g) {
+      g.challenger = challenger;
+    });
 
   }
 
   void makeChoice(
       const uint64_t& game_id,
-      const name &player, 
+      const name & player, 
+      const uint8_t& round_number,
       const std::string& choice,
       const eosio::public_key& key,
       const eosio::signature& signature){
 
 
-        
-  }
 
+      require_auth(get_self());
 
-  name rps::getWinner(const game &currentGame)
-  {
-      auto &board = currentGame.board;
-
-      bool isBoardFull = true;
-
-      // Use bitwise AND operator to determine the consecutive values of each column, row and diagonal
-      // Since 3 == 0b11, 2 == 0b10, 1 = 0b01, 0 = 0b00
-      std::vector<uint32_t> consecutiveColumn(game::boardWidth, 3);
-      std::vector<uint32_t> consecutiveRow(game::boardHeight, 3);
-      uint32_t consecutiveDiagonalBackslash = 3;
-      uint32_t consecutiveDiagonalSlash = 3;
-
-      for (uint32_t i = 0; i < board.size(); i++)
-      {
-          isBoardFull &= isEmptyCell(board[i]);
-          uint16_t row = uint16_t(i / game::boardWidth);
-          uint16_t column = uint16_t(i % game::boardWidth);
-
-          // Calculate consecutive row and column value
-          consecutiveRow[column] = consecutiveRow[column] & board[i];
-          consecutiveColumn[row] = consecutiveColumn[row] & board[i];
-          // Calculate consecutive diagonal \ value
-          if (row == column)
-          {
-              consecutiveDiagonalBackslash = consecutiveDiagonalBackslash & board[i];
-          }
-          // Calculate consecutive diagonal / value
-          if (row + column == game::boardWidth - 1)
-          {
-              consecutiveDiagonalSlash = consecutiveDiagonalSlash & board[i];
-          }
-      }
-
-      // Inspect the value of all consecutive row, column, and diagonal and determine winner
-      std::vector<uint32_t> aggregate = {consecutiveDiagonalBackslash, consecutiveDiagonalSlash};
-      aggregate.insert(aggregate.end(), consecutiveColumn.begin(), consecutiveColumn.end());
-      aggregate.insert(aggregate.end(), consecutiveRow.begin(), consecutiveRow.end());
-
-      for (auto value : aggregate)
-      {
-          if (value == 1)
-          {
-              return currentGame.host;
-          }
-          else if (value == 2)
-          {
-              return currentGame.challenger;
-          }
-      }
-      // Draw if the board is full, otherwise the winner is not determined yet
-      return isBoardFull ? draw : none;
-  }
-
-  void rps::move(const name &challenger, const name &host, const name &by, const uint16_t &row, const uint16_t &column)
-  {
-      check(has_auth(by), "The next move should be made by " + by.to_string());
-
-      // Check if game exists
-      games existingHostGames(get_self(), host.value);
-      auto itr = existingHostGames.find(challenger.value);
-      check(itr != existingHostGames.end(), "Game does not exist.");
+      // check(has_auth(player), "The next move should be made by " + by.to_string());
+          // Get match
+      auto match_itr = existingHostGames.require_find(game_id, "Game does not exist.");
 
       // Check if this game hasn't ended yet
-      check(itr->winner == none, "The game has ended.");
+      check(match_itr->winner == none, "The game has ended.");
       
-      // Check if this game belongs to the action sender
-      check(by == itr->host || by == itr->challenger, "This is not your game.");
-      // Check if this is the  action sender's turn
-      check(by == itr->turn, "it's not your turn yet!");
+      eosio::check(match_itr->challenger.value == player.value || match_itr->host.value == player.value, "You are not playing this game.");
 
-      // Check if user makes a valid movement
-      check(isValidMove(row, column, itr->board), "Not a valid movement.");
+      eosio::check(match_itr->round_number == round_number , "You are not playing this round.");
 
-      // Fill the cell, 1 for host, 2 for challenger
-      //TODO could use constant for 1 and 2 as well
-      const uint8_t cellValue = itr->turn == itr->host ? 1 : 2;
-      const auto turn = itr->turn == itr->host ? itr->challenger : itr->host;
-      existingHostGames.modify(itr, itr->host, [&](auto &g) {
-          g.board[row * game::boardWidth + column] = cellValue;
-          g.turn = turn;
-          g.winner = getWinner(g);
-      });
+      if(match_itr->challenger.value == player.value){
+        eosio::check( match_itr->choices_of_challenger.size() + 1 == round_number , "You are not playing this round.");
+        eosio::check( match_itr->has_challenger_made_choice == false , "You have already selected your choice.");
+      }
+
+      if(match_itr->host.value == player.value){
+        eosio::check( match_itr->choices_of_host.size() + 1 == round_number , "You are not playing this round.");
+        eosio::check( match_itr->has_host_made_choice == false , "You have already selected your choice.");
+      }
+
+      // Check that the choice, key and signature are valid
+      std::string data_to_hash = std::to_string(game_id) + ":" + choice;
+      eosio::checksum256 choice_digest = eosio::sha256(data_to_hash.data(), data_to_hash.size());
+      eosio::public_key recovered_key = eosio::recover_key(choice_digest, signature);
+      eosio::check(recovered_key == key, "Invalid signature or key provided.");
+
+      if(match_itr->challenger.value == player.value){
+        existingHostGames.modify(match_itr, get_self(), [&](auto& g) {
+          g.choices_of_challenger.push(choice);
+          g.has_challenger_made_choice = true;
+          g.challenger_key = key;
+          g.winner = checkWinner(g)
+        });
+      }else if(match_itr->host.value == player.value){
+        existingHostGames.modify(match_itr, get_self(), [&](auto& g) {
+          g.choices_of_host.push(choice);
+          g.has_host_made_choice = true;
+          g.host_key = key;
+          g.winner = checkWinner(g)
+        });
+      }
   }
 
+
+  name rps::checkWinner(const game &currentGame)
+  {
+
+      bool isFullRound = false;
+      
+      if( currentGame.has_host_made_choice  && currentGame.has_challenger_made_choice &&  currentGame.choices_of_host.size()  == currentGame.choices_of_challenger.size() && currentGame.choices_of_host.size() >  0 ){
+
+        isFullRound = currentGame.choices_of_host.size() > 12;
+
+        string host_choice =    currentGame.choices_of_host.back();
+        string challenger_choice =    currentGame.choices_of_challenger.back();
+        int result = states[host_choice][challenger_choice];
+
+        if(result == 0){
+          // game is tie
+
+        }else if(result == 1){
+          // host is win
+          currentGame.host_win_count += 1;
+        }else if(result == 2) {
+          //challenge is win
+          currentGame.challenger_win_count += 1;
+        }
+
+        if(currentGame.host_win_count > 1){
+          return currentGame.host;
+        }
+        
+        if(currentGame.challenger_win_count > 1){
+            return currentGame.challenge;
+        }
+      }
+
+      // Draw if the board is full, otherwise the winner is not determined yet
+      return isFullRound ? draw : none;
+   }
 
 } // namepsace contract
