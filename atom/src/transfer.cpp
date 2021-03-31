@@ -27,8 +27,8 @@ namespace proton {
     // Add balance
     auto balance_to_add = extended_asset(quantity, token_contract);
 
-    // Process action
-    process(MAX_PROCESS);
+    add_balance(from,balance_to_add)
+
   }
 
 
@@ -36,4 +36,5 @@ namespace proton {
     transfer_action t_action( balance.contract, {get_self(), "active"_n} );
     t_action.send(get_self(), to, balance.quantity, memo);
   }
+
 }

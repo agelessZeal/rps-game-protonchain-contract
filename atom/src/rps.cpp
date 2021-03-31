@@ -2,9 +2,8 @@
 
 namespace proton
 {
-  void rps::create(const name &challenger, name &host) {
+  void rps::create(name &host,  uint64_t amount) {
       require_auth(host);
-      check(challenger != host, "Challenger should not be the same as the host.");
 
       // Check if game already exists
 
@@ -13,18 +12,19 @@ namespace proton
 
       existingHostGames.emplace(host, [&](auto &g) {
           g.index = existingHostGames.available_primary_key();
-          g.challenger = challenger;
           g.host = host;
           g.resetGame();
       });
   }
 
-  void rps::restart(const name &challenger, const name &host, const name &by)
+  void rps::restart(const uint64_t& game_id,const name &challenger, const name &host, const name &by)
   {
       check(has_auth(by), "Only " + by.to_string() + "can restart the game.");
 
       // Check if game exists
-      auto itr = existingHostGames.find(challenger.value);
+      // auto itr = existingHostGames.find(challenger.value);
+      auto itr = existingHostGames.require_find(game_id, "Game not found.");
+
       check(itr != existingHostGames.end(), "Game does not exist.");
 
       // Check if this game belongs to the action sender
@@ -46,23 +46,14 @@ namespace proton
       auto itr = existingHostGames.find(challenger.value);
       check(itr != existingHostGames.end(), "Game does not exist.");
 
+      checkWinner((&*itr));
+
       // Remove game
       existingHostGames.erase(itr);
   }
 
-  bool rps::isEmptyCell(const uint8_t &cell)
-  {
-      return cell == 0;
-  }
 
-  bool rps::isValidMove(const uint16_t &row, const uint16_t &column, const std::vector<uint8_t> &board)
-  {
-      uint32_t movementLocation = row * game::boardWidth + column;
-      bool isValid = movementLocation < board.size() && isEmptyCell(board[movementLocation]);
-      return isValid;
-  }
-
-  void join(const uint64_t& game_id, const name &challenger){
+  void rps::join(const uint64_t& game_id, const name &challenger){
 
     require_auth(get_self());
     // Get match
@@ -76,14 +67,13 @@ namespace proton
 
   }
 
-  void makeChoice(
+  void rps::makeChoice(
       const uint64_t& game_id,
       const name & player, 
       const uint8_t& round_number,
       const std::string& choice,
       const eosio::public_key& key,
       const eosio::signature& signature){
-
 
 
       require_auth(get_self());
@@ -100,11 +90,13 @@ namespace proton
       eosio::check(match_itr->round_number == round_number , "You are not playing this round.");
 
       if(match_itr->challenger.value == player.value){
+        check(match_itr->challenger_available, "You didn't deposit anything.");
         eosio::check( match_itr->choices_of_challenger.size() + 1 == round_number , "You are not playing this round.");
         eosio::check( match_itr->has_challenger_made_choice == false , "You have already selected your choice.");
       }
 
       if(match_itr->host.value == player.value){
+        check(match_itr->host_available, "You didn't deposit anything.");
         eosio::check( match_itr->choices_of_host.size() + 1 == round_number , "You are not playing this round.");
         eosio::check( match_itr->has_host_made_choice == false , "You have already selected your choice.");
       }
@@ -133,6 +125,68 @@ namespace proton
   }
 
 
+  void rps::checkRound( const uint64_t& game_id,const name &challenger, const name &host){
+
+    check(has_auth(host), "Only the host can close the game.");
+
+    require_auth(host);
+
+    require_auth(get_self());
+
+    // Get match
+    auto match_itr = existingHostGames.require_find(game_id, "Game does not exist.");
+
+    eosio::check(match_itr->challenger.value == challenger.value && match_itr->host.value == host.value, "Different game selected.");
+
+    auto current_time = eosio::current_time_point().sec_since_epoch();
+
+    check(current_time >= match_itr->start_at + 5,"This game is not overtime yet" )
+
+    if( match_itr->has_host_made_choice == false  && match_itr->has_challenger_made_choice  && currentGame.choices_of_challenger.size() >  0 ){
+
+        std:string  choice =  random_choice(&(*match_itr));
+
+        existingHostGames.modify(match_itr, get_self(), [&](auto& g) {
+          g.choices_of_challenger.push(choice);
+          g.has_challenger_made_choice = true;
+          g.winner = checkWinner(g)
+        });
+
+
+    } else if( match_itr->has_host_made_choice  && match_itr->has_challenger_made_choice == false &&  currentGame.choices_of_host.size() >  0){
+
+        existingHostGames.modify(match_itr, get_self(), [&](auto& g) {
+          g.choices_of_host.push(choice);
+          g.has_host_made_choice = true;
+          g.winner = checkWinner(g)
+        });
+
+    } else {
+      checkWinner(&(*match_itr));
+    }
+
+  }
+
+
+  void rps::startRound( const uint64_t& game_id,const name &challenger, const name &host, const name &by){
+
+    check(has_auth(by), "Only " + by.to_string() + "can restart the game.");
+
+    // Check if game exists
+    // auto itr = existingHostGames.find(challenger.value);
+    auto itr = existingHostGames.require_find(game_id, "Game not found.");
+    
+    check(itr != existingHostGames.end(), "Game does not exist.");
+
+    // Check if this game belongs to the action sender
+    check(by == itr->host || by == itr->challenger, "This is not your game.");
+
+    existingHostGames.modify(match_itr, get_self(), [&](auto& g) {
+      g.newRound();
+    });
+
+  }
+
   name rps::checkWinner(const game &currentGame)
   {
 
@@ -158,16 +212,49 @@ namespace proton
         }
 
         if(currentGame.host_win_count > 1){
+
+          // unint
+
+          auto amount = (uint64_t)( currentGame.price*2*0.98);
+
+          extended_asset award_price =  new extended_asset(amount,SYSTEM_TOKEN_CONTRACT);
+          transfer_to(currentGame.host, refund_price, "create_rps");
+
           return currentGame.host;
         }
-        
-        if(currentGame.challenger_win_count > 1){
-            return currentGame.challenge;
-        }
-      }
 
+        if(currentGame.challenger_win_count > 1){
+          auto amount = (uint64_t)( currentGame.price*2*0.99);
+
+          extended_asset award_price =  new extended_asset(amount,SYSTEM_TOKEN_CONTRACT);
+          transfer_to(currentGame.challenge, refund_price, "create_rps");
+
+          return currentGame.challenge;
+        }
+
+        currentGame.newRound();
+
+      }
       // Draw if the board is full, otherwise the winner is not determined yet
       return isFullRound ? draw : none;
+   }
+
+   std:string rps::random_choice(const game &currentGame){
+
+      checksum256 result;
+
+      bytes sha256( (char *)&currentGame.host, sizeof(currentGame.challenger)*2, &result);
+
+      int choice = ((result.hash[1] + result.hash[0]  + result.hash[0] )% 3);
+
+      if(choice === 0){
+        return "R"
+      }else if(choice === 1){
+        return "P"
+      }else if(choice === 2){
+        return "C"
+      }
+      return "R"
    }
 
 } // namepsace contract
