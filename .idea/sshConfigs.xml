@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="SshConfigs">
+    <configs>
+      <sshConfig host="3.21.56.149" id="dbfd990b-171e-4a1e-92ca-4aa93652c727" keyPath="E:\cc\2021\03\10_rpc_protongame\new_aws\new_proton_node.pem" port="22" nameFormat="DESCRIPTIVE" username="ubuntu" />
+    </configs>
+  </component>
+</project>

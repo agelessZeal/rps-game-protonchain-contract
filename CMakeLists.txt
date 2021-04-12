@@ -17,7 +17,7 @@ include(ExternalProject)
 
 find_package(eosio.cdt)
 
-message(STATUS "Building eosio.contracts v${VERSION_FULL}")
+message(STATUS "Building rps contract v${VERSION_FULL}")
 
 set(EOSIO_CDT_VERSION_MIN "1.7")
 set(EOSIO_CDT_VERSION_SOFT_MAX "1.7")
@@ -47,8 +47,8 @@ endif()
 
 ExternalProject_Add(
    atom
-   SOURCE_DIR ${CMAKE_SOURCE_DIR}/atom
-   BINARY_DIR ${CMAKE_BINARY_DIR}/atom
+   SOURCE_DIR ${CMAKE_SOURCE_DIR}/rps
+   BINARY_DIR ${CMAKE_BINARY_DIR}/rps
    CMAKE_ARGS -DCMAKE_TOOLCHAIN_FILE=${EOSIO_CDT_ROOT}/lib/cmake/eosio.cdt/EosioWasmToolchain.cmake
    UPDATE_COMMAND ""
    PATCH_COMMAND ""

@@ -1,4 +1,5 @@
 #include <rps/rps.hpp>
+#include <rps/constants.hpp>
 
 namespace proton {
   void rps::ontransfer (const name& from, const name& to, const asset& quantity, const string& memo) {
@@ -27,7 +28,7 @@ namespace proton {
     // Add balance
     auto balance_to_add = extended_asset(quantity, token_contract);
 
-    add_balance(from,balance_to_add)
+    add_balance(from,balance_to_add);
 
   }
 
