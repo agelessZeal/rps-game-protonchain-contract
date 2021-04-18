@@ -3,21 +3,21 @@
 
 namespace proton
 {
-  void rps::create(name &host) {
+  uint64_t rps::create(name &host) {
       require_auth(host);
       // check(challenger != host, "Challenger should not be the same as the host.");
       // Check if game already exists
 
       auto itr = existing_games.find(host.value);
       check(itr == existing_games.end(), "Game already exists.");
-
+      uint64_t index = existing_games.available_primary_key();
       existing_games.emplace(host, [&](auto &g) {
-          g.index = existing_games.available_primary_key();
+          g.index = index;
           g.host = host;
           g.resetGame();
       });
 
-      deftx(5);
+      return index;
   }
 
   void rps::restart(const uint64_t& game_id,const name &challenger, const name &host, const name &by)
@@ -45,9 +45,11 @@ namespace proton
 
   void rps::close(const uint64_t& game_id,const name &challenger, const name &host, const name &by)
   {
-      check(has_auth(host), "Only the host can close the game.");
+//      check(has_auth(host), "Only the host can close the game.");
 
-      require_auth(host);
+//      require_auth(host);
+
+      require_auth(get_self()); //only this contract possible to call
 
       // Check if game exists
       auto itr = existing_games.require_find(game_id, "Game not found.");
@@ -67,9 +69,9 @@ namespace proton
 
   void rps::join(const uint64_t& game_id, const name &challenger){
 
-    check(has_auth(challenger), "Only the host can close the game.");
+    check(has_auth(challenger), "Only the host can join the game.");
 
-    require_auth(challenger);
+//    require_auth(challenger);
 
     // Get match
     auto match_itr = existing_games.require_find(game_id, "Game not found.");
@@ -84,12 +86,11 @@ namespace proton
       g.challenger = challenger;
     });
 
+    deftx(5);
   }
 
   std::string rps::getstate(
       const uint64_t& game_id,
-      const name &challenger,
-      const name &host,
       const name &by){
 
       auto itr = existing_games.require_find(game_id, "Game not found.");
@@ -99,7 +100,6 @@ namespace proton
       check(by == itr->host || by == itr->challenger, "This is not your game.");
 
       std::string result = "";
-
 
       result = +"*R-" + std::to_string(itr->round_number);
 
@@ -252,7 +252,10 @@ namespace proton
 
   void rps::checkround( const uint64_t& game_id,const name &challenger, const name &host){
 
-    check(has_auth(host), "Only the host can close the game.");
+//    check(has_auth(host), "Only the host can close the game.");
+
+    eosio::print("checkround\n");
+    eosio::print(game_id);
 
     require_auth(get_self()); //only this contract possible to call
 
@@ -260,7 +263,7 @@ namespace proton
     auto match_itr = existing_games.require_find(game_id, "Game does not exist.");
 
     if(match_itr->winner != none){
-            // Remove game
+    // Remove game
       existing_games.erase(match_itr);
       return;
     }
@@ -324,7 +327,6 @@ namespace proton
 
   name rps::check_winner(const Game &current_game)
   {
-
       if( current_game.has_host_made_choice  && current_game.has_challenger_made_choice &&  current_game.challenger_choice != ""  && current_game.host_choice != "" ){
 
         string host_choice =    current_game.host_choice;
@@ -336,7 +338,11 @@ namespace proton
             { "S",{{"R",2},{"P",1},{"S",0}}}
           };
 
+        eosio::print("check_winner\n");
+
         int result = states[host_choice][challenger_choice];
+
+        eosio::print(result);
 
         if(result == 0){
           // game is tie
@@ -361,17 +367,14 @@ namespace proton
             });
         }
 
-
-
-
         uint64_t amount = (uint64_t)(( current_game.host_bet + current_game.challenger_bet)*0.99);
 
         asset a;
         a.set_amount(amount);
 
         extended_asset award_asset(a,SYSTEM_TOKEN_CONTRACT);
-//        award_asset.quantity = amount;
-//        award_asset.contract = SYSTEM_TOKEN_CONTRACT;
+
+        eosio::print("deposit the winner result\n");
 
         if(current_game.host_win_count > 1){
           // unint
@@ -394,9 +397,6 @@ namespace proton
         existing_games.modify(match_itr, match_itr->host, [&](auto& g) {
                     g.newRound();
         });
-
-
-
       }
       // Draw if the board is full, otherwise the winner is not determined yet
       return  none;
@@ -405,6 +405,8 @@ namespace proton
    void rps::ticker() {
       //only this contract can call this action
       require_auth(get_self());
+
+      eosio::print("ticker\n");
 
       //check games timeouts
       uint32_t games_count = checkgames();
@@ -426,7 +428,7 @@ namespace proton
       transaction tickerTX{};
       tickerTX.actions.emplace_back( action({get_self(), "active"_n}, _self, "ticker"_n, current_time) );
       tickerTX.delay_sec = delay;
-      tickerTX.expiration = time_point_sec(current_time + 10);
+      tickerTX.expiration = time_point_sec(current_time + 5);
       uint128_t sender_id = (uint128_t(current_time) << 64) | current_time -5;
       tickerTX.send(sender_id, _self);
     }
@@ -436,11 +438,17 @@ namespace proton
 
       auto itr = existing_games.begin();
       uint32_t count = 0;
+      eosio::print("checkgames\n");
+      eosio::print(gametimeout);
 
       for (; itr != existing_games.end(); itr++) {
         auto gm = *itr;
 
         int timeout = eosio::current_time_point().sec_since_epoch() - gm.start_at;
+
+        eosio::print("timeout\n");
+        eosio::print(gm.start_at);
+        eosio::print(timeout);
 
         if( gm.start_at != 0){
           if(timeout > gametimeout){
@@ -458,6 +466,9 @@ namespace proton
       eosio::checksum256 result = eosio::sha256((char *)&current_game, sizeof(current_game)*2);
 
       int choice = ((result.get_array()[0] + result.get_array()[2]  + result.get_array()[0] )% 3);
+
+      eosio::print("random_choice\n");
+      eosio::print(choice);
 
       if(choice == 0){
         return "R";

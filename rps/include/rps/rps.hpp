@@ -11,6 +11,7 @@
 #include <eosio/crypto.hpp>
 #include <eosio/transaction.hpp>
 #include <eosio/system.hpp>
+#include <eosio/print.hpp>
 
 
 // Local
@@ -35,7 +36,7 @@ namespace proton {
 
     // Declare class method.
     [[eosio::action]]
-    void create(name &host);
+    uint64_t create(name &host);
 
     // Declare class method.
     [[eosio::action]]
@@ -68,8 +69,6 @@ namespace proton {
     [[eosio::action]]
     std::string getstate(
       const uint64_t& game_id,
-      const name &challenger,
-      const name &host,
       const name &by);
 
 
