@@ -93,7 +93,11 @@ namespace proton
       const uint64_t& game_id,
       const name &by){
 
-      auto itr = existing_games.require_find(game_id, "Game not found.");
+      auto itr = existing_games.find(game_id);
+
+      if(itr == existing_games.end()){
+        itr = existing_games.find(by.value);
+      }
 
       check(itr != existing_games.end(), "Game does not exist.");
 
@@ -101,46 +105,48 @@ namespace proton
 
       std::string result = "";
 
+      result = +"*id-" + std::to_string(itr->index);
+
       result = +"*R-" + std::to_string(itr->round_number);
 
       result = +"*WL-" + std::to_string(itr->challenger_win_count);
 
       result = +"*WH-" + std::to_string(itr->host_win_count) + "*";
 
-      if(itr->winner != none){
+
+
+      result = +"pay status";
+      if(itr->challenger_available){
         result = +"-1";
       }else{
         result = +"-0";
       }
 
-      if(itr->challenger_available){
-        result = +"1";
-      }else{
-        result = +"0";
-      }
-
       if(itr->host_available){
-        result = +"1";
+        result = +"-1";
       }else{
-        result = +"0";
+        result = +"-0";
       }
 
+      result = +"*choice status";
       if(itr->has_challenger_made_choice){
-        result = +"1";
+        result = +"-1";
       }else{
-        result = +"0";
+        result = +"-0";
       }
 
       if(itr->has_host_made_choice){
-        result = +"1";
+        result = +"-1";
       }else{
-        result = +"0";
+        result = +"-0";
       }
 
+      result = +"*choice status 2";
+
       if(itr->challenger_choice != ""){
-        result = +"1";
+        result = +"-1";
       }else{
-        result = +"0";
+        result = +"-0";
       }
 
 
@@ -149,6 +155,10 @@ namespace proton
       }else{
         result = +"0";
       }
+
+      result = +"*game result";
+
+      result = + std::to_string(itr->winner);
 
       if(itr->winner != none){
         result = +"-1";
