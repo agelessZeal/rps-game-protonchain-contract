@@ -63,14 +63,12 @@ namespace proton {
     [[eosio::action]]
     void join(
       const uint64_t& game_id,
-      const name &challenger,
-      const name &host);
+      const name &challenger);
 
     // Declare class method.
     [[eosio::action]]
     std::string getstate(
       const uint64_t& game_id,
-      const name &host,
       const name &by);
 
 
@@ -79,7 +77,6 @@ namespace proton {
     void makechoice(
        const uint64_t& game_id,
        const name &player,
-       const name &host,
        const uint8_t& round_number,
        const eosio::checksum256& choice_digest);
 
@@ -88,7 +85,6 @@ namespace proton {
     void unlockchoice(
        const uint64_t& game_id,
        const name &player,
-       const name &host,
        const uint8_t& round_number,
        const std::string& choice,
        const std::string& password);
@@ -184,8 +180,8 @@ namespace proton {
         }
 
 
-        // uint64_t primary_key() const { return index; };
-        uint64_t primary_key() const { return host.value; };
+        uint64_t primary_key() const { return index; };
+        uint64_t get_secondary() const { return host.value; };
         uint64_t get_third() const { return challenger.value; };
 
         EOSLIB_SERIALIZE( Game, (index)(start_at)(host)(challenger)(winner)(host_bet)(challenger_bet)(host_win_count)(challenger_win_count)(host_choice)(challenger_choice)(host_choice_password)(challenger_choice_password)(host_choice_hash)(challenger_choice_hash))
@@ -193,7 +189,8 @@ namespace proton {
 
         // Define the games type which uses the game data structure.
     typedef multi_index<"games"_n, Game,
-     indexed_by<"host"_n, const_mem_fun< Game, uint64_t, &Game::primary_key>>,
+     indexed_by<"index"_n, const_mem_fun< Game, uint64_t, &Game::primary_key>>,
+     indexed_by<"host"_n, const_mem_fun<Game, uint64_t, &Game::get_secondary>>,
      indexed_by<"challenger"_n,const_mem_fun<Game,uint64_t, &Game::get_third>>
     >  games;
 

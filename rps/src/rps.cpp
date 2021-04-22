@@ -25,8 +25,8 @@ namespace proton
       check(has_auth(by), "Only " + by.to_string() + "can restart the game.");
 
       // Check if game exists
-      auto itr = existing_games.find(host.value);
-      // auto itr = existing_games.require_find(game_id, "Game not found.");
+      // auto itr = existing_games.find(challenger.value);
+      auto itr = existing_games.require_find(game_id, "Game not found.");
 
       check(itr != existing_games.end(), "Game does not exist.");
 
@@ -52,9 +52,9 @@ namespace proton
       require_auth(get_self()); //only this contract possible to call
 
       // Check if game exists
-      auto itr = existing_games.require_find(host.value, "Game not found.");
+      auto itr = existing_games.require_find(game_id, "Game not found.");
 
-      // check(itr != existing_games.end(), "Game does not exist.");
+      check(itr != existing_games.end(), "Game does not exist.");
 
       check(by == itr->host || by == itr->challenger, "This is not your game.");
 
@@ -67,14 +67,14 @@ namespace proton
   }
 
 
-  void rps::join(const uint64_t& game_id, const name &challenger,const name &host){
+  void rps::join(const uint64_t& game_id, const name &challenger){
 
-    check(has_auth(challenger), "Only the challenger can join the game.");
+    check(has_auth(challenger), "Only the host can join the game.");
 
 //    require_auth(challenger);
 
     // Get match
-    auto match_itr = existing_games.require_find(host.value, "Host Game not found.");
+    auto match_itr = existing_games.require_find(game_id, "Game not found.");
 
     auto itr = existing_games.find(challenger.value);
 
@@ -91,18 +91,15 @@ namespace proton
 
   std::string rps::getstate(
       const uint64_t& game_id,
-      const name &host,
       const name &by){
 
-      // auto itr = existing_games.find(game_id);
+      auto itr = existing_games.find(game_id);
 
-      auto itr = existing_games.require_find(host.value, "Host Game not found.");
+      if(itr == existing_games.end()){
+        itr = existing_games.find(by.value);
+      }
 
-      // if(itr == existing_games.end()){
-      //   itr = existing_games.find(host.value);
-      // }
-
-      // check(itr != existing_games.end(), "Game does not exist.");
+      check(itr != existing_games.end(), "Game does not exist.");
 
       check(by == itr->host || by == itr->challenger, "This is not your game.");
 
@@ -116,7 +113,9 @@ namespace proton
 
       result = +"*WH-" + std::to_string(itr->host_win_count) + "*";
 
-      result = +"pay_status:";
+
+
+      result = +"pay status";
       if(itr->challenger_available){
         result = +"-1";
       }else{
@@ -129,7 +128,7 @@ namespace proton
         result = +"-0";
       }
 
-      result = +"*choice_status:";
+      result = +"*choice status";
       if(itr->has_challenger_made_choice){
         result = +"-1";
       }else{
@@ -142,7 +141,7 @@ namespace proton
         result = +"-0";
       }
 
-      result = +"*choice_string:";
+      result = +"*choice status 2";
 
       if(itr->challenger_choice != ""){
         result = +"-1";
@@ -157,9 +156,9 @@ namespace proton
         result = +"0";
       }
 
-      result = +"*game_result:";
+      result = +"*game result";
 
-//      result = + std::to_string(itr->winner.to_string());
+      result = + std::to_string(itr->winner);
 
       if(itr->winner != none){
         result = +"-1";
@@ -172,12 +171,11 @@ namespace proton
   void rps::unlockchoice(
     const uint64_t& game_id,
     const name &player,
-    const name &host,
     const uint8_t& round_number,
     const std::string& choice,
     const std::string& password){
 
-    auto match_itr = existing_games.require_find(host.value, "Game does not exist.");
+    auto match_itr = existing_games.require_find(game_id, "Game does not exist.");
 
     // Check if this game hasn't ended yet
     check(match_itr->winner == none, "The game has ended.");
@@ -223,14 +221,13 @@ namespace proton
   void rps::makechoice(
       const uint64_t& game_id,
       const name & player,
-      const name &host,
       const uint8_t& round_number,
       const eosio::checksum256& choice_digest){
 
 
       // check(has_auth(player), "The next move should be made by " + by.to_string());
           // Get match
-      auto match_itr = existing_games.require_find(host.value, "Game does not exist.");
+      auto match_itr = existing_games.require_find(game_id, "Game does not exist.");
 
       // Check if this game hasn't ended yet
       check(match_itr->winner == none, "The game has ended.");
@@ -268,12 +265,12 @@ namespace proton
 //    check(has_auth(host), "Only the host can close the game.");
 
     eosio::print("checkround\n");
-    
+    eosio::print(game_id);
 
     require_auth(get_self()); //only this contract possible to call
 
     // Get match
-    auto match_itr = existing_games.require_find(host.value, "Game does not exist.");
+    auto match_itr = existing_games.require_find(game_id, "Game does not exist.");
 
     if(match_itr->winner != none){
     // Remove game
@@ -324,7 +321,7 @@ namespace proton
 
     // Check if game exists
     // auto itr = existing_games.find(challenger.value);
-    auto itr = existing_games.require_find(host.value, "Game not found.");
+    auto itr = existing_games.require_find(game_id, "Game not found.");
 
     check(itr != existing_games.end(), "Game does not exist.");
 
