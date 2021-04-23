@@ -36,46 +36,38 @@ namespace proton {
 
     // Declare class method.
     [[eosio::action]]
-    uint64_t create(name &host);
+    void create(name &host);
 
     // Declare class method.
     [[eosio::action]]
-    void restart(const uint64_t& game_id,const name &challenger, const name &host, const name &by);
+    void restart(const name &challenger, const name &host, const name &by);
 
     // Declare class method.
     [[eosio::action]]
-    void checkround(const uint64_t& game_id,const name &challenger, const name &host);
+    void checkround(const name &challenger, const name &host);
 
     // Declare class method.
     [[eosio::action]]
     void close(
-      const uint64_t& game_id,
       const name &challenger,
       const name &host,
       const name &by);
 
     // Declare class method.
     [[eosio::action]]
-    void startround( const uint64_t& game_id,const name &challenger, const name &host, const name &by);
+    void startround( const name &challenger, const name &host, const name &by);
 
 
     // Declare class method.
     [[eosio::action]]
     void join(
-      const uint64_t& game_id,
+      const name &host,
       const name &challenger);
-
-    // Declare class method.
-    [[eosio::action]]
-    std::string getstate(
-      const uint64_t& game_id,
-      const name &by);
 
 
     // Declare class method.
     [[eosio::action]]
     void makechoice(
-       const uint64_t& game_id,
        const name &player,
        const uint8_t& round_number,
        const eosio::checksum256& choice_digest);
@@ -83,7 +75,6 @@ namespace proton {
     // Declare class method.
     [[eosio::action]]
     void unlockchoice(
-       const uint64_t& game_id,
        const name &player,
        const uint8_t& round_number,
        const std::string& choice,
@@ -108,7 +99,7 @@ namespace proton {
   private:
 
           // Declare game data structure.
-    struct [[eosio::table]] Game
+    struct [[eosio::table]] game
     {
 
         uint64_t index;
@@ -180,18 +171,17 @@ namespace proton {
         }
 
 
-        uint64_t primary_key() const { return index; };
-        uint64_t get_secondary() const { return host.value; };
+        uint64_t primary_key() const { return host.value; };
+//        uint64_t get_secondary() const { return host.value; };
         uint64_t get_third() const { return challenger.value; };
 
-        EOSLIB_SERIALIZE( Game, (index)(start_at)(host)(challenger)(winner)(host_bet)(challenger_bet)(host_win_count)(challenger_win_count)(host_choice)(challenger_choice)(host_choice_password)(challenger_choice_password)(host_choice_hash)(challenger_choice_hash))
+        EOSLIB_SERIALIZE( game, (start_at)(host)(challenger)(winner)(host_bet)(challenger_bet)(host_win_count)(challenger_win_count)(host_choice)(challenger_choice)(host_choice_password)(challenger_choice_password)(host_choice_hash)(challenger_choice_hash))
     };
 
         // Define the games type which uses the game data structure.
-    typedef multi_index<"games"_n, Game,
-     indexed_by<"index"_n, const_mem_fun< Game, uint64_t, &Game::primary_key>>,
-     indexed_by<"host"_n, const_mem_fun<Game, uint64_t, &Game::get_secondary>>,
-     indexed_by<"challenger"_n,const_mem_fun<Game,uint64_t, &Game::get_third>>
+    typedef multi_index<"games"_n, game,
+     indexed_by<"host"_n, const_mem_fun< game, uint64_t, &game::primary_key>>,
+     indexed_by<"challenger"_n,const_mem_fun<game,uint64_t, &game::get_third>>
     >  games;
 
     games existing_games;
@@ -204,9 +194,9 @@ namespace proton {
 
     void add_balance (const name& account, const extended_asset& delta);
 
-    std::string random_choice(const Game &currentGame);
+    std::string random_choice(const game &currentGame);
 
-    name check_winner(const Game &currentGame);
+    name check_winner(const game &currentGame);
 
     static inline eosio::checksum256 hash_key(eosio::public_key key) {
       eosio::ecc_public_key public_key_data = std::get<0>(key);
