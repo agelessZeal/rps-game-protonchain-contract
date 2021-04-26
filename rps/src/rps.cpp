@@ -73,6 +73,13 @@ namespace proton
       existingHostGames.erase(itr);
   }
 
+   void rps::getstate( const name &host, const name &challenger){
+
+      games existingHostGames(get_self(), host.value);
+      auto itr = existingHostGames.find(host.value);
+      print('getstate');
+   }
+
 
   void rps::join( const name &host, const name &challenger){
 
@@ -204,27 +211,29 @@ namespace proton
 
     checksum256 choice_digest = sha256(data_to_hash.data(), data_to_hash.size());
 
+    std::string choice_string = to_hex(choice_digest);
+
 
     if(match_itr->challenger.value == player.value){
       check(match_itr->challenger_available, "You didn't deposit anything.");
-      check(match_itr->challenger_choice_hash == choice_digest , "Your choice is different from the original has that you sent");
+      check(match_itr->challenger_choice_hash == choice_string , "Your choice is different from the original has that you sent");
     }
 
     if(match_itr->host.value == player.value){
       check(match_itr->host_available, "You didn't deposit anything.");
-      check(match_itr->host_choice_hash == choice_digest , "Your choice is different from the original has that you sent.");
+      check(match_itr->host_choice_hash == choice_string , "Your choice is different from the original has that you sent.");
     }
 
     if(match_itr->challenger.value == player.value){
       existingHostGames.modify(match_itr,match_itr->host, [&](auto& g) {
-        g.challenger_choice_hash = choice_digest;
+//        g.challenger_choice_hash = choice_digest;
         g.challenger_choice_password = password;
         g.challenger_choice = choice;
         g.winner = check_winner(g);
       });
     }else if(match_itr->host.value == player.value){
       existingHostGames.modify(match_itr, match_itr->host, [&](auto& g) {
-        g.host_choice_hash =choice_digest ;
+//        g.host_choice_hash =choice_digest ;
         g.host_choice_password = password;
         g.host_choice = choice;
         g.winner = check_winner(g);
@@ -262,14 +271,16 @@ namespace proton
         check( match_itr->has_host_made_choice == false , "You have already selected your choice.");
       }
 
+      string choice_string =  to_hex(choice_digest);
+
       if(match_itr->challenger.value == player.value){
         existingHostGames.modify(match_itr,match_itr->host, [&](auto& g) {
-          g.challenger_choice_hash = choice_digest;
+          g.challenger_choice_hash = choice_string;
           g.has_challenger_made_choice = true;
         });
       } else if(match_itr->host.value == player.value){
         existingHostGames.modify(match_itr, match_itr->host, [&](auto& g) {
-          g.host_choice_hash = choice_digest ;
+          g.host_choice_hash = choice_string ;
           g.has_host_made_choice = true;
         });
       }
@@ -477,12 +488,14 @@ namespace proton
 
     uint32_t rps::checkgames(){
 
-      auto itr = existing_games.begin();
+     games existingHostGames(get_self(), get_self().value);
+
+      auto itr = existingHostGames.begin();
       uint32_t count = 0;
       print("checkgames\n");
       print(gametimeout);
 
-      for (; itr != existing_games.end(); itr++) {
+      for (; itr != existingHostGames.end(); itr++) {
         auto gm = *itr;
 
         int timeout = current_time_point().sec_since_epoch() - gm.start_at;
@@ -520,4 +533,116 @@ namespace proton
       }
       return "R";
    }
+
+   std::string rps::to_hex(const checksum256 &hashed) {
+   		// Construct variables
+   		string result;
+   		const char *hex_chars = "0123456789abcdef";
+   		const auto bytes = hashed.extract_as_byte_array();
+   		// Iterate hash and build result
+   		for (uint32_t i = 0; i < bytes.size(); ++i) {
+   			(result += hex_chars[(bytes.at(i) >> 4)]) += hex_chars[(bytes.at(i) & 0x0f)];
+   		}
+   		// Return string
+   		return result;
+   	}
+
+
+//   checksum256 decode_checksum(string hex)
+//   {
+//       checksum256 buffer;
+//
+//       int index = 0;
+//       while (index < hex.length()) {
+//           char c = hex[index];
+//
+//           int value = 0;
+//           if (c >= '0' && c <= '9')
+//               value = (c - '0');
+//           else if (c >= 'A' && c <= 'F')
+//               value = (10 + (c - 'A'));
+//           else if (c >= 'a' && c <= 'f')
+//               value = (10 + (c - 'a'));
+//
+//           buffer.hash[(index / 2)] += value << (((index + 1) % 2) * 4);
+//           index++;
+//       }
+//
+//       return buffer;
+//   }
+
+//   /* Convert a SHA256 sum (given as a string) to checksum256 object */
+//   bool hex2bin(const std::string& in, checksum256 &out)
+//   {
+//       if (in.size() != 64)
+//           return false;
+//
+//       std::string hex{"0123456789abcdef"};
+//       for (int i = 0; i < 32; i++) {
+//           auto d1 = hex.find(in[2*i]);
+//           auto d2 = hex.find(in[2*i+1]);
+//           if (d1 == std::string::npos || d2 == std::string::npos)
+//               return false;
+//
+//           // checksum256 is composed of little endian int128_t
+//           reinterpret_cast<char *>(out.data())[i/16*16 + 15-(i%16)] = (d1 << 4)  + d2;
+//       }
+//       return true;
+//   }
+
+   //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+   //------------------------------
+   //TOOLS for SHA256 convertation
+   //----------------------------
+//   string rps::SHA256toHEX(capi_checksum256 sha256) {
+//   	return conv2HEX((char*)sha256.hash, sizeof(sha256.hash));
+//   }
+//
+//   string rps::conv2HEX(char* hasha, uint32_t ssize) {
+//   	std::string res;
+//   	const char* hex = "0123456789abcdef";
+//
+//   	uint8_t* conv = (uint8_t*)hasha;
+//   	for (uint32_t i = 0; i < ssize; ++i)
+//   		(res += hex[(conv[i] >> 4)]) += hex[(conv[i] & 0x0f)];
+//   	return res;
+//   }
+//
+//   capi_checksum256 rps::HEX2SHA256(string hexstr) {
+//   	check(hexstr.length() == 64, "invalid sha256");
+//
+//   	capi_checksum256 cs;
+//   	convFromHEX(hexstr, (char*)cs.hash, sizeof(cs.hash));
+//   	return cs;
+//   }
+//
+//   uint8_t rps::convFromHEX(char ch) {
+//   	if (ch >= '0' && ch <= '9') return ch - '0';
+//   	if (ch >= 'a' && ch <= 'f') return ch - 'a' + 10;
+//   	if (ch >= 'A' && ch <= 'F') return ch - 'A' + 10;
+//
+//   	check(false, "Wrong hex symbol");
+//   	return 0;
+//   }
+//
+//   size_t rps::convFromHEX(string hexstr, char* res, size_t res_len) {
+//   	auto itr = hexstr.begin();
+//
+//   	uint8_t* rpos = (uint8_t*)res;
+//   	uint8_t* rend = rpos + res_len;
+//
+//   	while (itr != hexstr.end() && rend != rpos) {
+//   		*rpos = convFromHEX((char)(*itr)) << 4;
+//   		++itr;
+//   		if (itr != hexstr.end()) {
+//   			*rpos |= convFromHEX((char)(*itr));
+//   			++itr;
+//   		}
+//   		++rpos;
+//   	}
+//   	return rpos - (uint8_t*)res;
+//   }
+
+
+
 } // namepsace contract
