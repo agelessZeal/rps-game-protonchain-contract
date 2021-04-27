@@ -36,7 +36,7 @@ namespace proton {
 
     // Declare class method.
     [[eosio::action]]
-    void create(name &host);
+    void create(name &host,name &challenger);
 
     // Declare class method.
     [[eosio::action]]
@@ -58,17 +58,17 @@ namespace proton {
     void startround( const name &challenger, const name &host, const name &by);
 
 
-    // Declare class method.
-    [[eosio::action]]
-    void join(
-      const name &host,
-      const name &challenger);
+//    // Declare class method.
+//    [[eosio::action]]
+//    void join(
+//      const name &host,
+//      const name &challenger);
 
-   // Declare class method.
-   [[eosio::action]]
-   void getstate(
-     const name &host,
-     const name &challenger);
+//   // Declare class method.
+//   [[eosio::action]]
+//   void getstate(
+//     const name &host,
+//     const name &challenger);
 
     // Declare class method.
     [[eosio::action]]
@@ -119,6 +119,7 @@ namespace proton {
             uint64_t challenger_bet;
 
             uint64_t start_at;
+            uint64_t created_at;
 
             bool host_available;
             bool challenger_available;
@@ -149,9 +150,9 @@ namespace proton {
                 host_available = false;
                 challenger_available = false;
                 host_choice_password = "";
-                host_choice="";
-               challenger_choice_hash =  "";
-               host_choice_hash =  "";
+                host_choice= "";
+                challenger_choice_hash =  "";
+                host_choice_hash =  "";
 
                 challenger_choice_password = "";
                 challenger_choice = "";

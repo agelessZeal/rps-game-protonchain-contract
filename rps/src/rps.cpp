@@ -3,18 +3,27 @@
 
 namespace proton
 {
-  void rps::create(name &host) {
+  void rps::create(name &host,name &challenger) {
 //      require_auth(host);
       // check(challenger != host, "Challenger should not be the same as the host.");
       // Check if game already exists
 
       games existingHostGames(get_self(), host.value);
+
+//      auto match_itr = existing_games.begin();
+//
+//      for (; match_itr != existing_games.end(); match_itr++) {
+//         existing_games.erase(match_itr);
+//      }
+
       auto itr = existingHostGames.find(host.value);
       check(itr == existingHostGames.end(), "Game already exists.");
 
       existingHostGames.emplace(host, [&](auto &g) {
           g.host = host;
           g.resetGame();
+          g.challenger = challenger;
+          g.created_at = current_time_point().sec_since_epoch();
       });
   }
 
@@ -73,117 +82,38 @@ namespace proton
       existingHostGames.erase(itr);
   }
 
-   void rps::getstate( const name &host, const name &challenger){
+//   void rps::getstate( const name &host, const name &challenger){
+//
+//      games existingHostGames(get_self(), host.value);
+//      auto itr = existingHostGames.find(host.value);
+//      print('getstate');
+//   }
 
-      games existingHostGames(get_self(), host.value);
-      auto itr = existingHostGames.find(host.value);
-      print('getstate');
-   }
 
-
-  void rps::join( const name &host, const name &challenger){
-
-    check(has_auth(challenger), "Only the host can join the game.");
-
-//    require_auth(challenger);
-
-    // Get match
-
-    games existingHostGames(get_self(), host.value);
-    auto match_itr = existingHostGames.require_find(host.value,"Game not found.");
-
-//    auto match_itr = existingHostGames.require_find(game_id, "Game not found.");
-
-    auto itr = existingHostGames.find(challenger.value);
-
-    check(itr == existingHostGames.end(), "You have already joined one game. Finish it");
-
-    check(match_itr->challenger != none , "This match is full now");
-
-    existingHostGames.modify(match_itr, match_itr->host, [&](auto& g) {
-      g.challenger = challenger;
-    });
-
-    deftx(5);
-  }
-
-//  std::string rps::getstate(
-//      const uint64_t& game_id,
-//      const name &by){
+//  void rps::join( const name &host, const name &challenger){
 //
-//      auto itr = existing_games.find(game_id);
+////    check(has_auth(challenger), "Only the host can join the game.");
 //
-//      if(itr == existing_games.end()){
-//        itr = existing_games.find(by.value);
-//      }
+////    require_auth(challenger);
 //
-//      check(itr != existing_games.end(), "Game does not exist.");
+//    // Get match
 //
-//      check(by == itr->host || by == itr->challenger, "This is not your game.");
+//    games existingHostGames(get_self(), host.value);
+//    auto match_itr = existingHostGames.require_find(host.value,"Game not found.");
 //
-//      std::string result = "";
+////    auto match_itr = existingHostGames.require_find(game_id, "Game not found.");
 //
-//      result = +"*id-" + std::to_string(itr->index);
+//    auto itr = existingHostGames.find(challenger.value);
 //
-//      result = +"*R-" + std::to_string(itr->round_number);
+//    check(itr == existingHostGames.end(), "You have already joined one game. Finish it");
 //
-//      result = +"*WL-" + std::to_string(itr->challenger_win_count);
+//    check(match_itr->challenger == none , "This match is full now");
 //
-//      result = +"*WH-" + std::to_string(itr->host_win_count) + "*";
+//    existingHostGames.modify(match_itr, match_itr->host, [&](auto& g) {
+//      g.challenger = challenger;
+//    });
 //
-//
-//
-//      result = +"pay status";
-//      if(itr->challenger_available){
-//        result = +"-1";
-//      }else{
-//        result = +"-0";
-//      }
-//
-//      if(itr->host_available){
-//        result = +"-1";
-//      }else{
-//        result = +"-0";
-//      }
-//
-//      result = +"*choice status";
-//      if(itr->has_challenger_made_choice){
-//        result = +"-1";
-//      }else{
-//        result = +"-0";
-//      }
-//
-//      if(itr->has_host_made_choice){
-//        result = +"-1";
-//      }else{
-//        result = +"-0";
-//      }
-//
-//      result = +"*choice status 2";
-//
-//      if(itr->challenger_choice != ""){
-//        result = +"-1";
-//      }else{
-//        result = +"-0";
-//      }
-//
-//
-//      if(itr->host_choice != ""){
-//        result = +"1";
-//      }else{
-//        result = +"0";
-//      }
-//
-//      result = +"*game result";
-//
-//      result = + std::to_string(itr->winner);
-//
-//      if(itr->winner != none){
-//        result = +"-1";
-//      }else{
-//        result = +"-0";
-//      }
-//      return result;
+//    deftx(5);
 //  }
 
   void rps::unlockchoice(
@@ -488,7 +418,7 @@ namespace proton
 
     uint32_t rps::checkgames(){
 
-     games existingHostGames(get_self(), get_self().value);
+      games existingHostGames(get_self(), get_self().value);
 
       auto itr = existingHostGames.begin();
       uint32_t count = 0;
@@ -499,6 +429,12 @@ namespace proton
         auto gm = *itr;
 
         int timeout = current_time_point().sec_since_epoch() - gm.start_at;
+
+        int created_timeout = current_time_point().sec_since_epoch() - gm.created_at;
+
+        if(created_timeout > 3600){
+          existingHostGames.erase(itr);
+        }
 
         print("timeout\n");
         print(gm.start_at);
@@ -642,7 +578,5 @@ namespace proton
 //   	}
 //   	return rpos - (uint8_t*)res;
 //   }
-
-
 
 } // namepsace contract
