@@ -8,7 +8,7 @@ namespace proton
       // check(challenger != host, "Challenger should not be the same as the host.");
       // Check if game already exists
 
-      games existingHostGames(get_self(), host.value);
+      games existingHostGames(get_self(), get_self().value);
 
 //      auto match_itr = existing_games.begin();
 //
@@ -35,7 +35,7 @@ namespace proton
       // auto itr = existing_games.find(challenger.value);
 
 
-     games existingHostGames(get_self(), host.value);
+     games existingHostGames(get_self(), get_self().value);
      auto itr = existingHostGames.find(host.value);
 
 //      auto itr = existing_games.require_find(game_id, "Game not found.");
@@ -65,7 +65,7 @@ namespace proton
 
       // Check if game exists
 
-       games existingHostGames(get_self(), host.value);
+       games existingHostGames(get_self(), get_self().value);
        auto itr = existingHostGames.find(host.value);
 
 //      auto itr = existing_games.require_find(game_id, "Game not found.");
@@ -123,7 +123,7 @@ namespace proton
     const std::string& password){
 
 
-    games existingHostGames(get_self(), player.value);
+    games existingHostGames(get_self(), get_self().value);
     auto match_itr = existingHostGames.require_find(player.value,"Game does not exist.");
 
 //    auto match_itr = existing_games.require_find(game_id, "Game does not exist.");
@@ -180,7 +180,7 @@ namespace proton
       // check(has_auth(player), "The next move should be made by " + by.to_string());
           // Get match
 
-      games existingHostGames(get_self(), player.value);
+      games existingHostGames(get_self(), get_self().value);
       auto match_itr = existingHostGames.require_find(player.value,"Game does not exist.");
 //      auto match_itr = existing_games.require_find(game_id, "Game does not exist.");
 
@@ -226,7 +226,7 @@ namespace proton
 //    require_auth(get_self()); //only this contract possible to call
 
 
-      games existingHostGames(get_self(), host.value);
+      games existingHostGames(get_self(), get_self().value);
       auto match_itr = existingHostGames.require_find(host.value,"Game does not exist.");
 
     // Get match
@@ -279,7 +279,7 @@ namespace proton
 
 //    require_auth(get_self()); //only this contract possible to call
 
-     games existingHostGames(get_self(), host.value);
+     games existingHostGames(get_self(), get_self().value);
      auto itr = existingHostGames.require_find(host.value,"Game does not exist.");
 
     // Check if game exists
@@ -324,7 +324,7 @@ namespace proton
           // host is win
 
 
-           games existingHostGames(get_self(), current_game.host.value);
+           games existingHostGames(get_self(), get_self().value);
            auto match_itr = existingHostGames.require_find( current_game.host.value,"Game does not exist.");
               // Get match
 //          auto match_itr = existing_games.require_find(current_game.index, "Game does not exist.");
@@ -336,7 +336,7 @@ namespace proton
         }else if(result == 2) {
           //challenge is win
 
-           games existingHostGames(get_self(), current_game.host.value);
+           games existingHostGames(get_self(), get_self().value);
            auto match_itr = existingHostGames.require_find( current_game.host.value,"Game does not exist.");
 
 //            auto match_itr = existing_games.require_find(current_game.index, "Game does not exist.");
@@ -371,7 +371,7 @@ namespace proton
           return current_game.challenger;
         }
 
-        games existingHostGames(get_self(), current_game.host.value);
+        games existingHostGames(get_self(), get_self().value);
         auto match_itr = existingHostGames.require_find( current_game.host.value,"Game does not exist.");
 
 //        auto match_itr = existing_games.require_find(current_game.index, "Game does not exist.");

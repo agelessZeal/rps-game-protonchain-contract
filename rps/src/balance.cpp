@@ -6,7 +6,7 @@ namespace proton {
 
     // Get match
 
-      games existingHostGames(get_self(), account.value);
+      games existingHostGames(get_self(), get_self().value);
       auto match_itr = existingHostGames.require_find(account.value,"Game does not exist.");
 
 //    auto match_itr = existing_games.require_find(account.value, "Game not found.");
