@@ -34,8 +34,8 @@ namespace proton
       // Check if game exists
       // auto itr = existing_games.find(challenger.value);
 
-
      games existingHostGames(get_self(), get_self().value);
+
      auto itr = existingHostGames.find(host.value);
 
 //      auto itr = existing_games.require_find(game_id, "Game not found.");
@@ -55,39 +55,33 @@ namespace proton
       deftx(5);
   }
 
-  void rps::close(const name &challenger, const name &host, const name &by)
-  {
-//      check(has_auth(host), "Only the host can close the game.");
-
-//      require_auth(host);
-
-      require_auth(get_self()); //only this contract possible to call
-
-      // Check if game exists
-
-       games existingHostGames(get_self(), get_self().value);
-       auto itr = existingHostGames.find(host.value);
-
-//      auto itr = existing_games.require_find(game_id, "Game not found.");
-
-      check(itr != existingHostGames.end(), "Game does not exist.");
-
-      check(by == itr->host || by == itr->challenger, "This is not your game.");
-
-      check_winner((*itr));
-
-      check( itr->winner == none, "Can't close the game in the middle.");
-
-      // Remove game
-      existingHostGames.erase(itr);
-  }
-
-//   void rps::getstate( const name &host, const name &challenger){
+//  void rps::close(const name &challenger, const name &host, const name &by)
+//  {
+////      check(has_auth(host), "Only the host can close the game.");
 //
-//      games existingHostGames(get_self(), host.value);
-//      auto itr = existingHostGames.find(host.value);
-//      print('getstate');
-//   }
+////      require_auth(host);
+//
+//      require_auth(get_self()); //only this contract possible to call
+//
+//      // Check if game exists
+//
+//       games existingHostGames(get_self(), get_self().value);
+//       auto itr = existingHostGames.find(host.value);
+//
+////      auto itr = existing_games.require_find(game_id, "Game not found.");
+//
+//      check(itr != existingHostGames.end(), "Game does not exist.");
+//
+//      check(by == itr->host || by == itr->challenger, "This is not your game.");
+//
+//      check_winner((*itr));
+//
+//      check( itr->winner == none, "Can't close the game in the middle.");
+//
+//      // Remove game
+//      existingHostGames.erase(itr);
+//  }
+
 
 
 //  void rps::join( const name &host, const name &challenger){
@@ -225,18 +219,15 @@ namespace proton
 
 //    require_auth(get_self()); //only this contract possible to call
 
-
       games existingHostGames(get_self(), get_self().value);
       auto match_itr = existingHostGames.require_find(host.value,"Game does not exist.");
 
-    // Get match
-//    auto match_itr = existing_games.require_find(game_id, "Game does not exist.");
-
-    if(match_itr->winner != none){
-    // Remove game
-      existingHostGames.erase(match_itr);
-      return;
-    }
+      if(match_itr->winner != none){
+       // Remove game
+        existingHostGames.erase(match_itr);
+        check(false, "This game has winner and remove it in table.");
+        return;
+       }
     check(match_itr->winner == none, "This game is end.");
 
     check(match_itr->challenger.value == challenger.value && match_itr->host.value == host.value, "Different game selected.");
@@ -257,7 +248,6 @@ namespace proton
           g.winner = check_winner(g);
         });
 
-
     } else if( match_itr->has_host_made_choice  && match_itr->has_challenger_made_choice == false  && match_itr->challenger_choice == "" && match_itr->host_choice != ""){
 
         std::string  choice =  random_choice(*match_itr);
@@ -268,7 +258,10 @@ namespace proton
         });
 
     } else {
-     name winner = check_winner(*match_itr);
+
+        existingHostGames.modify(match_itr, match_itr->host, [&](auto& g) {
+          g.winner = check_winner(g);
+        });
     }
   }
 
@@ -282,20 +275,24 @@ namespace proton
      games existingHostGames(get_self(), get_self().value);
      auto itr = existingHostGames.require_find(host.value,"Game does not exist.");
 
-    // Check if game exists
-    // auto itr = existing_games.find(challenger.value);
-//    auto itr = existing_games.require_find(game_id, "Game not found.");
+     if(itr->winner != none){
+     // Remove game
+       existingHostGames.erase(itr);
+       return;
+     }
 
-//    check(itr != existing_games.end(), "Game does not exist.");
+     check(itr->winner == none, "This game is end.");
 
-    // Check if this game belongs to the action sender
-    check(by == itr->host || by == itr->challenger, "This is not your game.");
+     // Check if this game belongs to the action sender
+     check(by == itr->host || by == itr->challenger, "This is not your game.");
 
-    check(itr->host_available && itr->challenger_available, "The player don't pay anything");
+     check(itr->host_available && itr->challenger_available, "The player don't pay anything");
 
-    existingHostGames.modify(itr, itr->host, [&](auto& g) {
-      g.newRound();
-    });
+     check(itr->host_choice != "" && itr->challenger_choice != "","This current round is not ended");
+
+     existingHostGames.modify(itr, itr->host, [&](auto& g) {
+       g.newRound();
+     });
   }
 
   name rps::check_winner(const game &current_game)
@@ -322,8 +319,6 @@ namespace proton
 
         }else if(result == 1){
           // host is win
-
-
            games existingHostGames(get_self(), get_self().value);
            auto match_itr = existingHostGames.require_find( current_game.host.value,"Game does not exist.");
               // Get match
@@ -365,20 +360,19 @@ namespace proton
 
         if(current_game.challenger_win_count > 1){
 
-
           transfer_to(current_game.challenger, award_asset, "winner prize");
-
           return current_game.challenger;
         }
 
-        games existingHostGames(get_self(), get_self().value);
-        auto match_itr = existingHostGames.require_find( current_game.host.value,"Game does not exist.");
-
-//        auto match_itr = existing_games.require_find(current_game.index, "Game does not exist.");
-
-        existingHostGames.modify(match_itr, match_itr->host, [&](auto& g) {
-                    g.newRound();
-        });
+//        games existingHostGames(get_self(), get_self().value);
+//
+//        auto match_itr = existingHostGames.require_find( current_game.host.value,"Game does not exist.");
+//
+////      auto match_itr = existing_games.require_find(current_game.index, "Game does not exist.");
+//
+//        existingHostGames.modify(match_itr, match_itr->host, [&](auto& g) {
+//                    g.newRound();
+//        });
       }
       // Draw if the board is full, otherwise the winner is not determined yet
       return  none;

@@ -46,12 +46,12 @@ namespace proton {
     [[eosio::action]]
     void checkround(const name &challenger, const name &host);
 
-    // Declare class method.
-    [[eosio::action]]
-    void close(
-      const name &challenger,
-      const name &host,
-      const name &by);
+//    // Declare class method.
+//    [[eosio::action]]
+//    void close(
+//      const name &challenger,
+//      const name &host,
+//      const name &by);
 
     // Declare class method.
     [[eosio::action]]
@@ -64,11 +64,6 @@ namespace proton {
 //      const name &host,
 //      const name &challenger);
 
-//   // Declare class method.
-//   [[eosio::action]]
-//   void getstate(
-//     const name &host,
-//     const name &challenger);
 
     // Declare class method.
     [[eosio::action]]
