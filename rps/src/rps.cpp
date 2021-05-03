@@ -34,9 +34,9 @@ namespace proton
       // Check if game exists
       // auto itr = existing_games.find(challenger.value);
 
-     games existingHostGames(get_self(), get_self().value);
+      games existingHostGames(get_self(), get_self().value);
 
-     auto itr = existingHostGames.find(host.value);
+      auto itr = existingHostGames.find(host.value);
 
 //      auto itr = existing_games.require_find(game_id, "Game not found.");
 
@@ -45,7 +45,7 @@ namespace proton
       // Check if this game belongs to the action sender
       check(by == itr->host || by == itr->challenger, "This is not your game.");
 
-      check( itr->winner == none, "Can't close the game in the middle.");
+      check( itr->winner != none, "Can't close the game in the middle.");
 
       // Reset game
       existingHostGames.modify(itr, itr->host, [](auto &g) {
@@ -268,7 +268,7 @@ namespace proton
 
   void rps::startround(const name &challenger, const name &host, const name &by){
 
-    check(has_auth(by), "Only " + by.to_string() + "can restart the game.");
+     check(has_auth(by), "Only " + by.to_string() + "can start round.");
 
 //    require_auth(get_self()); //only this contract possible to call
 

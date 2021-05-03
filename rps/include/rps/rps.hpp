@@ -94,8 +94,6 @@ namespace proton {
     // Action wrappers
     using transfer_action     = action_wrapper<"transfer"_n,     &rps::ontransfer>;
 
-
-
               // Declare game data structure.
         TABLE game
         {
