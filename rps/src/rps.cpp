@@ -20,6 +20,7 @@ namespace proton
       check(itr == existingHostGames.end(), "Game already exists.");
 
       existingHostGames.emplace(host, [&](auto &g) {
+          g.index = existingHostGames.available_primary_key();
           g.host = host;
           g.resetGame();
           g.challenger = challenger;
@@ -45,7 +46,7 @@ namespace proton
       // Check if this game belongs to the action sender
       check(by == itr->host || by == itr->challenger, "This is not your game.");
 
-      check( itr->winner != none, "Can't close the game in the middle.");
+      check( itr->winner != none, "Can't restart the game in the middle.");
 
       // Reset game
       existingHostGames.modify(itr, itr->host, [](auto &g) {
@@ -116,7 +117,6 @@ namespace proton
     const std::string& choice,
     const std::string& password){
 
-
     games existingHostGames(get_self(), get_self().value);
     auto match_itr = existingHostGames.require_find(player.value,"Game does not exist.");
 
@@ -127,9 +127,9 @@ namespace proton
 
     check(match_itr->challenger.value == player.value || match_itr->host.value == player.value, "You are not playing this game.");
 
-    check(match_itr->round_number == round_number , "You are not playing this round.");
+//    check(match_itr->round_number == round_number , "You are not playing this round.");
 
-    check( match_itr->has_challenger_made_choice &&  match_itr->has_host_made_choice , "Both player should select the choice");
+    check( match_itr->has_challenger_made_choice == 1 &&  match_itr->has_host_made_choice == 1 , "Both players should select the choice");
 
     std::string data_to_hash = password + ":" + choice;
 
@@ -139,12 +139,12 @@ namespace proton
 
 
     if(match_itr->challenger.value == player.value){
-      check(match_itr->challenger_available, "You didn't deposit anything.");
+      check(match_itr->challenger_available == 1, "You didn't deposit anything.");
       check(match_itr->challenger_choice_hash == choice_string , "Your choice is different from the original has that you sent");
     }
 
     if(match_itr->host.value == player.value){
-      check(match_itr->host_available, "You didn't deposit anything.");
+      check(match_itr->host_available == 1, "You didn't deposit anything.");
       check(match_itr->host_choice_hash == choice_string , "Your choice is different from the original has that you sent.");
     }
 
@@ -186,13 +186,13 @@ namespace proton
       check(match_itr->round_number == round_number , "You are not playing this round.");
 
       if(match_itr->challenger.value == player.value){
-        check( match_itr->challenger_available, "You didn't deposit anything.");
-        check( match_itr->has_challenger_made_choice == false , "You have already selected your choice.");
+        check( match_itr->challenger_available == 1, "You didn't deposit anything.");
+        check( match_itr->has_challenger_made_choice == 0 , "You have already selected your choice.");
       }
 
       if(match_itr->host.value == player.value){
-        check(match_itr->host_available, "You didn't deposit anything.");
-        check( match_itr->has_host_made_choice == false , "You have already selected your choice.");
+        check(match_itr->host_available == 1, "You didn't deposit anything.");
+        check( match_itr->has_host_made_choice == 0 , "You have already selected your choice.");
       }
 
       string choice_string =  to_hex(choice_digest);
@@ -200,12 +200,12 @@ namespace proton
       if(match_itr->challenger.value == player.value){
         existingHostGames.modify(match_itr,match_itr->host, [&](auto& g) {
           g.challenger_choice_hash = choice_string;
-          g.has_challenger_made_choice = true;
+          g.has_challenger_made_choice = 1;
         });
       } else if(match_itr->host.value == player.value){
         existingHostGames.modify(match_itr, match_itr->host, [&](auto& g) {
           g.host_choice_hash = choice_string ;
-          g.has_host_made_choice = true;
+          g.has_host_made_choice = 1;
         });
       }
   }
@@ -219,46 +219,49 @@ namespace proton
 
 //    require_auth(get_self()); //only this contract possible to call
 
-      games existingHostGames(get_self(), get_self().value);
-      auto match_itr = existingHostGames.require_find(host.value,"Game does not exist.");
+    games existingHostGames(get_self(), get_self().value);
+    auto match_itr = existingHostGames.require_find(host.value,"Game does not exist.");
 
-      if(match_itr->winner != none){
-       // Remove game
-        existingHostGames.erase(match_itr);
-        check(false, "This game has winner and remove it in table.");
-        return;
-       }
+    if(match_itr->winner != none){
+        // Remove game
+         existingHostGames.erase(match_itr);
+         check(false, "This game has winner and remove it in table.");
+         return;
+    }
+
     check(match_itr->winner == none, "This game is end.");
 
     check(match_itr->challenger.value == challenger.value && match_itr->host.value == host.value, "Different game selected.");
 
-    check(match_itr->host_available && match_itr->challenger_available, "The player don't pay anything");
+    check(match_itr->host_available == 1 , "The host doesn't deposit anything");
+
+    check(match_itr->challenger_available == 1, "The challenger doesn't deposit anything");
 
     auto current_time = current_time_point().sec_since_epoch();
 
     check( match_itr->start_at > 0 && current_time >= match_itr->start_at + gametimeout,"This game is not overtime yet" );
 
-    if( match_itr->has_host_made_choice == false  && match_itr->has_challenger_made_choice  && match_itr->host_choice == ""  && match_itr->challenger_choice != "" ){
+    check( match_itr->has_host_made_choice + match_itr->has_challenger_made_choice > 0,"Two players don't choose the move at all." );
+
+    if( match_itr->has_host_made_choice == 0  && match_itr->has_challenger_made_choice  == 1 && match_itr->host_choice == ""  && match_itr->challenger_choice != "" ){
 
         std::string  choice =  random_choice(*match_itr);
 
         existingHostGames.modify(match_itr, match_itr->host, [&](auto& g) {
           g.host_choice = choice;
-          g.has_challenger_made_choice = true;
+          g.has_host_made_choice = 1;
           g.winner = check_winner(g);
         });
 
-    } else if( match_itr->has_host_made_choice  && match_itr->has_challenger_made_choice == false  && match_itr->challenger_choice == "" && match_itr->host_choice != ""){
+    } else if( match_itr->has_host_made_choice == 1 && match_itr->has_challenger_made_choice == 0  && match_itr->challenger_choice == "" && match_itr->host_choice != ""){
 
         std::string  choice =  random_choice(*match_itr);
         existingHostGames.modify(match_itr, match_itr->host, [&](auto& g) {
           g.challenger_choice = choice;
-          g.has_host_made_choice = true;
+          g.has_challenger_made_choice = 1;
           g.winner = check_winner(g);
         });
-
     } else {
-
         existingHostGames.modify(match_itr, match_itr->host, [&](auto& g) {
           g.winner = check_winner(g);
         });
@@ -268,11 +271,12 @@ namespace proton
 
   void rps::startround(const name &challenger, const name &host, const name &by){
 
-     check(has_auth(by), "Only " + by.to_string() + "can start round.");
+//     check(has_auth(by), "Only " + by.to_string() + "can start round.");
 
 //    require_auth(get_self()); //only this contract possible to call
 
      games existingHostGames(get_self(), get_self().value);
+
      auto itr = existingHostGames.require_find(host.value,"Game does not exist.");
 
      if(itr->winner != none){
@@ -286,7 +290,9 @@ namespace proton
      // Check if this game belongs to the action sender
      check(by == itr->host || by == itr->challenger, "This is not your game.");
 
-     check(itr->host_available && itr->challenger_available, "The player don't pay anything");
+     check(itr->host_available == 1, "The host doesn't deposit anything");
+
+     check(itr->challenger_available == 1, "The challenger doesn't deposit anything");
 
      check(itr->host_choice != "" && itr->challenger_choice != "","This current round is not ended");
 
@@ -297,7 +303,7 @@ namespace proton
 
   name rps::check_winner(const game &current_game)
   {
-      if( current_game.has_host_made_choice  && current_game.has_challenger_made_choice &&  current_game.challenger_choice != ""  && current_game.host_choice != "" ){
+      if( current_game.has_host_made_choice  == 1 && current_game.has_challenger_made_choice == 1 &&  current_game.challenger_choice != ""  && current_game.host_choice != "" ){
 
         string host_choice =    current_game.host_choice;
         string challenger_choice = current_game.challenger_choice;
@@ -423,8 +429,9 @@ namespace proton
         auto gm = *itr;
 
         int timeout = current_time_point().sec_since_epoch() - gm.start_at;
+        auto current_time = eosio::current_time_point().sec_since_epoch();
 
-        int created_timeout = current_time_point().sec_since_epoch() - gm.created_at;
+        int created_timeout = current_time - gm.created_at;
 
         if(created_timeout > 3600){
           existingHostGames.erase(itr);
@@ -475,7 +482,7 @@ namespace proton
    		}
    		// Return string
    		return result;
-   	}
+   }
 
 
 //   checksum256 decode_checksum(string hex)

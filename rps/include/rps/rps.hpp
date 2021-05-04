@@ -99,10 +99,9 @@ namespace proton {
         {
 
             uint64_t index;
-
             name challenger = none;
             name host = none;
-            name winner = none; // = none/ draw/ name of host/ name of challenger
+            name winner = none;
 
             uint8_t round_number;
             uint8_t host_win_count;
@@ -114,13 +113,11 @@ namespace proton {
             uint64_t start_at;
             uint64_t created_at;
 
-            bool host_available;
-            bool challenger_available;
+            uint8_t host_available;
+            uint8_t challenger_available;
 
-            bool has_host_made_choice;
-            bool has_challenger_made_choice;
-
-
+            uint8_t has_host_made_choice;
+            uint8_t has_challenger_made_choice;
 
             std::string host_choice_hash;
             std::string host_choice_password;
@@ -135,13 +132,18 @@ namespace proton {
             {
                 winner = "none"_n;
                 round_number = 1;
-                challenger_win_count = 0;
                 host_win_count = 0;
+                challenger_win_count = 0;
 
-                has_host_made_choice =  false;
-                has_challenger_made_choice = false;
-                host_available = false;
-                challenger_available = false;
+                host_bet = 0;
+                challenger_bet = 0;
+
+                start_at = 0;
+
+                has_host_made_choice =  0;
+                has_challenger_made_choice = 0;
+                host_available = 0;
+                challenger_available = 0;
                 host_choice_password = "";
                 host_choice= "";
                 challenger_choice_hash =  "";
@@ -149,18 +151,13 @@ namespace proton {
 
                 challenger_choice_password = "";
                 challenger_choice = "";
-
-                host_bet = 0;
-                challenger_bet = 0;
-
-                start_at = 0;
             }
 
                     // Reset game
             void newRound()
             {
-                has_host_made_choice =  false;
-                has_challenger_made_choice = false;
+                has_host_made_choice =  0;
+                has_challenger_made_choice = 0;
                 round_number += 1;
                 host_choice_password = "";
                 host_choice="";
@@ -171,17 +168,13 @@ namespace proton {
                 challenger_choice_hash =  "";
                 host_choice_hash =  "";
 
-//               challenger_choice_hash =  eosio::sha256("0000000000000000", 16);
-//               host_choice_hash =  eosio::sha256("0000000000000000", 16);
-
                 start_at = eosio::current_time_point().sec_since_epoch();
             }
 
             uint64_t primary_key() const { return host.value; };
-    //        uint64_t get_secondary() const { return host.value; };
             uint64_t get_third() const { return challenger.value; };
 
-            EOSLIB_SERIALIZE( game, (start_at)(host)(challenger)(winner)(host_bet)(challenger_bet)(host_win_count)(challenger_win_count)(host_choice)(challenger_choice)(host_choice_password)(challenger_choice_password)(challenger_choice_hash)(host_choice_hash))
+            EOSLIB_SERIALIZE( game, (index)(challenger)(host)(winner)(round_number)(host_win_count)(challenger_win_count)(host_bet)(challenger_bet)(start_at)(created_at)(host_available)(challenger_available)(has_host_made_choice)(has_challenger_made_choice)(host_choice_hash)(host_choice_password)(host_choice)(challenger_choice_hash)(challenger_choice_password)(challenger_choice));
         };
 
             // Define the games type which uses the game data structure.

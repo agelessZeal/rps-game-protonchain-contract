@@ -17,9 +17,9 @@ namespace proton {
       }
       existingHostGames.modify(match_itr, match_itr->host, [&](auto& g) {
         g.host_bet = delta.quantity.amount;
-        g.host_available = true;
+        g.host_available = 1;
 
-        if( g.challenger_available ){
+        if( g.challenger_available == 1 ){
           g.start_at = eosio::current_time_point().sec_since_epoch();
         }
 
@@ -32,8 +32,8 @@ namespace proton {
 
       existingHostGames.modify(match_itr, match_itr->host, [&](auto& g) {
         g.challenger_bet = delta.quantity.amount;
-        g.challenger_available = true;
-        if( g.host_available ){
+        g.challenger_available = 1;
+        if( g.host_available == 1 ){
           g.start_at = eosio::current_time_point().sec_since_epoch();
         }
       });
