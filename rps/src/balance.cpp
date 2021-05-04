@@ -14,14 +14,14 @@ namespace proton {
 
       for (; itr != existingHostGames.end(); itr++) {
           if(itr->winner == none){
-            if(itr->host == account.value || itr->challenger == account.value){
+            if(itr->host == account || itr->challenger == account){
                 match_itr = itr;
                 break;
             }
           }
       }
 
-      check(match_itr != existingHostGames.begin(),'Your game is not found' )
+      check(match_itr != existingHostGames.begin(),'Your game is not found' );
 
 //    auto match_itr = existing_games.require_find(account.value, "Game not found.");
 
