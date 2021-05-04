@@ -119,11 +119,11 @@ namespace proton {
             uint8_t has_host_made_choice;
             uint8_t has_challenger_made_choice;
 
-            std::string host_choice_hash;
+            eosio::checksum256 host_choice_hash;
             std::string host_choice_password;
             std::string host_choice;
 
-            std::string challenger_choice_hash;
+            eosio::checksum256 challenger_choice_hash;
             std::string challenger_choice_password;
             std::string challenger_choice;
 

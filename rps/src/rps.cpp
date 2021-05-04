@@ -133,19 +133,19 @@ namespace proton
 
     std::string data_to_hash = password + ":" + choice;
 
-    checksum256 choice_digest = sha256(data_to_hash.data(), data_to_hash.size());
+    checksum256 choice_digest = eosio::sha256(data_to_hash.data(), data_to_hash.size());
 
-    std::string choice_string = to_hex(choice_digest);
+//    std::string choice_string = to_hex(choice_digest);
 
 
     if(match_itr->challenger.value == player.value){
       check(match_itr->challenger_available == 1, "You didn't deposit anything.");
-      check(match_itr->challenger_choice_hash == choice_string , "Your choice is different from the original has that you sent");
+      check(match_itr->challenger_choice_hash == choice_digest , "Your choice is different from the original has that you sent");
     }
 
     if(match_itr->host.value == player.value){
       check(match_itr->host_available == 1, "You didn't deposit anything.");
-      check(match_itr->host_choice_hash == choice_string , "Your choice is different from the original has that you sent.");
+      check(match_itr->host_choice_hash == choice_digest , "Your choice is different from the original has that you sent.");
     }
 
     if(match_itr->challenger.value == player.value){
@@ -195,16 +195,16 @@ namespace proton
         check( match_itr->has_host_made_choice == 0 , "You have already selected your choice.");
       }
 
-      string choice_string =  to_hex(choice_digest);
+//      string choice_string =  to_hex(choice_digest);
 
       if(match_itr->challenger.value == player.value){
         existingHostGames.modify(match_itr,match_itr->host, [&](auto& g) {
-          g.challenger_choice_hash = choice_string;
+          g.challenger_choice_hash = choice_digest;
           g.has_challenger_made_choice = 1;
         });
       } else if(match_itr->host.value == player.value){
         existingHostGames.modify(match_itr, match_itr->host, [&](auto& g) {
-          g.host_choice_hash = choice_string ;
+          g.host_choice_hash = choice_digest ;
           g.has_host_made_choice = 1;
         });
       }
@@ -454,7 +454,7 @@ namespace proton
 
    std::string rps::random_choice(const game &current_game){
 
-      checksum256 result = sha256((char *)&current_game, sizeof(current_game)*2);
+      checksum256 result = eosio::sha256((char *)&current_game, sizeof(current_game)*2);
 
       int choice = ((result.get_array()[0] + result.get_array()[2]  + result.get_array()[0] )% 3);
 
