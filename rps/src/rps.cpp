@@ -150,14 +150,14 @@ namespace proton
 
     if(match_itr->challenger.value == player.value){
       existingHostGames.modify(match_itr,match_itr->host, [&](auto& g) {
-//        g.challenger_choice_hash = choice_digest;
+
         g.challenger_choice_password = password;
         g.challenger_choice = choice;
         g.winner = check_winner(g);
       });
     }else if(match_itr->host.value == player.value){
       existingHostGames.modify(match_itr, match_itr->host, [&](auto& g) {
-//        g.host_choice_hash =choice_digest ;
+
         g.host_choice_password = password;
         g.host_choice = choice;
         g.winner = check_winner(g);

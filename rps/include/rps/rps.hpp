@@ -146,8 +146,8 @@ namespace proton {
                 challenger_available = 0;
                 host_choice_password = "";
                 host_choice= "";
-                challenger_choice_hash =  "";
-                host_choice_hash =  "";
+//                challenger_choice_hash =  "";
+//                host_choice_hash =  "";
 
                 challenger_choice_password = "";
                 challenger_choice = "";
@@ -165,8 +165,8 @@ namespace proton {
                 challenger_choice_password = "";
                 challenger_choice = "";
 
-                challenger_choice_hash =  "";
-                host_choice_hash =  "";
+//                challenger_choice_hash =  "";
+//                host_choice_hash =  "";
 
                 start_at = eosio::current_time_point().sec_since_epoch();
             }

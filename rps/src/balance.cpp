@@ -7,7 +7,21 @@ namespace proton {
     // Get match
 
       games existingHostGames(get_self(), get_self().value);
-      auto match_itr = existingHostGames.require_find(account.value,"Game does not exist.");
+//      auto match_itr = existingHostGames.require_find(account.value,"Game does not exist.");
+
+      auto match_itr = existingHostGames.begin();
+      auto itr = existingHostGames.begin();
+
+      for (; itr != existingHostGames.end(); itr++) {
+          if(itr->winner == none){
+            if(itr->host == account.value || itr->challenger == account.value){
+                match_itr = itr;
+                break;
+            }
+          }
+      }
+
+      check(match_itr != existingHostGames.begin(),'Your game is not found' )
 
 //    auto match_itr = existing_games.require_find(account.value, "Game not found.");
 
