@@ -183,7 +183,7 @@ namespace proton
 
       check(match_itr->challenger.value == player.value || match_itr->host.value == player.value, "You are not playing this game.");
 
-      check(match_itr->round_number == round_number , "You are not playing this round.");
+//      check(match_itr->round_number == round_number , "You are not playing this round.");
 
       if(match_itr->challenger.value == player.value){
         check( match_itr->challenger_available == 1, "You didn't deposit anything.");
