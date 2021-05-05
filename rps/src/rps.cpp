@@ -17,15 +17,20 @@ namespace proton
 //      }
 
       auto itr = existingHostGames.find(host.value);
-      check(itr == existingHostGames.end(), "Game already exists.");
-
-      existingHostGames.emplace(host, [&](auto &g) {
-          g.index = existingHostGames.available_primary_key();
-          g.host = host;
-          g.resetGame();
-          g.challenger = challenger;
-          g.created_at = current_time_point().sec_since_epoch();
-      });
+      if(itr != existingHostGames.end() && itr->winner != none  && itr->challenger == challenger){
+         existingHostGames.modify(itr, itr->host, [](auto &g) {
+            g.resetGame();
+         });
+      }else{
+        check(itr == existingHostGames.end(), "Game already exists.");
+        existingHostGames.emplace(host, [&](auto &g) {
+            g.index = existingHostGames.available_primary_key();
+            g.host = host;
+            g.resetGame();
+            g.challenger = challenger;
+            g.created_at = current_time_point().sec_since_epoch();
+        });
+      }
   }
 
   void rps::restart(const name &challenger, const name &host, const name &by)
@@ -152,8 +157,7 @@ namespace proton
 
     checksum256 choice_digest = eosio::sha256(data_to_hash.data(), data_to_hash.size());
 
-//    std::string choice_string = to_hex(choice_digest);
-
+    std::string choice_string = to_hex(choice_digest);
 
     if(match_itr->challenger.value == player.value){
       check(match_itr->challenger_available == 1, "You didn't deposit anything.");
