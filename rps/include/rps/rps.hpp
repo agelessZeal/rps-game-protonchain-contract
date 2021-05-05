@@ -98,9 +98,9 @@ namespace proton {
     // Action wrappers
     using transfer_action     = action_wrapper<"transfer"_n,     &rps::ontransfer>;
 
-    [[eosio::action]] void bysec( name secid );
-
-    using bysec_action = action_wrapper<"bysec"_n, &rps::bysec>;
+//    [[eosio::action]] void bysec( name secid );
+//
+//    using bysec_action = action_wrapper<"bysec"_n, &rps::bysec>;
 
 
 

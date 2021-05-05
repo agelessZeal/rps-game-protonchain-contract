@@ -28,7 +28,7 @@ namespace proton {
         }
       }
 
-      check(match_itr != existingHostGames.end(),'Your game is not found' );
+      check(match_itr != existingHostGames.end(),"Your game is not found");
 
   //    auto match_itr = existing_games.require_find(account.value, "Game not found.");
 
