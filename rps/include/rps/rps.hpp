@@ -69,6 +69,8 @@ namespace proton {
     [[eosio::action]]
     void makechoice(
        const name &player,
+       const name &host,
+       const name &challenger,
        const uint8_t& round_number,
        const eosio::checksum256& choice_digest);
 
@@ -76,6 +78,8 @@ namespace proton {
     [[eosio::action]]
     void unlockchoice(
        const name &player,
+       const name &host,
+       const name &challenger,
        const uint8_t& round_number,
        const std::string& choice,
        const std::string& password);

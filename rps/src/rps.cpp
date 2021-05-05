@@ -128,12 +128,14 @@ namespace proton
 
   void rps::unlockchoice(
     const name &player,
+    const name &host,
+    const name &challenger,
     const uint8_t& round_number,
     const std::string& choice,
     const std::string& password){
 
     games existingHostGames(get_self(), get_self().value);
-    auto match_itr = existingHostGames.require_find(player.value,"Game does not exist.");
+    auto match_itr = existingHostGames.require_find(host.value,"Game does not exist.");
 
 //    auto match_itr = existing_games.require_find(game_id, "Game does not exist.");
 
@@ -182,6 +184,8 @@ namespace proton
 
   void rps::makechoice(
       const name & player,
+      const name &host,
+      const name &challenger,
       const uint8_t& round_number,
       const checksum256& choice_digest){
 
@@ -190,7 +194,7 @@ namespace proton
           // Get match
 
       games existingHostGames(get_self(), get_self().value);
-      auto match_itr = existingHostGames.require_find(player.value,"Game does not exist.");
+      auto match_itr = existingHostGames.require_find(host.value,"Game does not exist.");
 //      auto match_itr = existing_games.require_find(game_id, "Game does not exist.");
 
       // Check if this game hasn't ended yet
