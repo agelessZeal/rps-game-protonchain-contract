@@ -58,13 +58,6 @@ namespace proton {
     void startround( const name &challenger, const name &host, const name &by);
 
 
-//    // Declare class method.
-//    [[eosio::action]]
-//    void join(
-//      const name &host,
-//      const name &challenger);
-
-
     // Declare class method.
     [[eosio::action]]
     void makechoice(
@@ -98,13 +91,7 @@ namespace proton {
     // Action wrappers
     using transfer_action     = action_wrapper<"transfer"_n,     &rps::ontransfer>;
 
-//    [[eosio::action]] void bysec( name secid );
-//
-//    using bysec_action = action_wrapper<"bysec"_n, &rps::bysec>;
-
-
-
-          // Declare game data structure.
+    // Declare game data structure.
     TABLE game
     {
 
@@ -203,19 +190,9 @@ namespace proton {
 
     void add_balance (const name& account, const extended_asset& delta);
 
-//    checksum256 decode_checksum(string hex);
     string to_hex(const checksum256 &hashed);
 
-
-//    string SHA256toHEX(capi_checksum256 sha256);
-//    string conv2HEX(char* hasha, uint32_t ssize);
-//    capi_checksum256 HEX2SHA256(string hexstr);
-//    uint8_t convFromHEX(char ch);
-//    size_t  convFromHEX(string hexstr, char* res, size_t res_len);
-
     std::string random_choice(const game &currentGame);
-
-//    name check_winner(const game &currentGame);
 
     void send_balance(const name & winner,const game &current_game);
 

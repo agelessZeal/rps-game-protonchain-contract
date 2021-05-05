@@ -62,20 +62,6 @@ namespace proton
   }
 
 
-//  // iterates the multi index table rows using the secondary index and prints the row's values
-//  [[eosio::action]] void rps::bysec( name secid ) {
-//    // access the secondary index
-//
-//    games existingHostGames(get_self(), get_self().value);
-//
-//    auto idx = existingHostGames.get_index<"secid"_n>();
-//    // iterate through secondary index
-//    for ( auto itr = idx.begin(); itr != idx.end(); itr++ ) {
-//      // print each row's values
-//      eosio::print_f("Game Table : {%, %, %}\n", itr->host, itr->challenger, itr->winner);
-//    }
-//  }
-
 //  void rps::close(const name &challenger, const name &host, const name &by)
 //  {
 ////      check(has_auth(host), "Only the host can close the game.");
@@ -101,34 +87,6 @@ namespace proton
 //
 //      // Remove game
 //      existingHostGames.erase(itr);
-//  }
-
-
-
-//  void rps::join( const name &host, const name &challenger){
-//
-////    check(has_auth(challenger), "Only the host can join the game.");
-//
-////    require_auth(challenger);
-//
-//    // Get match
-//
-//    games existingHostGames(get_self(), host.value);
-//    auto match_itr = existingHostGames.require_find(host.value,"Game not found.");
-//
-////    auto match_itr = existingHostGames.require_find(game_id, "Game not found.");
-//
-//    auto itr = existingHostGames.find(challenger.value);
-//
-//    check(itr == existingHostGames.end(), "You have already joined one game. Finish it");
-//
-//    check(match_itr->challenger == none , "This match is full now");
-//
-//    existingHostGames.modify(match_itr, match_itr->host, [&](auto& g) {
-//      g.challenger = challenger;
-//    });
-//
-//    deftx(5);
 //  }
 
   void rps::unlockchoice(
@@ -379,88 +337,6 @@ namespace proton
      });
   }
 
-//  name rps::check_winner(const game &current_game)
-//  {
-//      if( current_game.has_host_made_choice  == 1 && current_game.has_challenger_made_choice == 1 &&  current_game.challenger_choice != ""  && current_game.host_choice != "" ){
-//
-//        string host_choice =    current_game.host_choice;
-//        string challenger_choice = current_game.challenger_choice;
-//
-//        map<string ,map<string,uint8_t>> states = {
-//            { "R", {{"R",0},{"P",2},{"S",1}}},
-//            { "P",{{"P",0},{"R",1},{"S",2}}},
-//            { "S",{{"R",2},{"P",1},{"S",0}}}
-//          };
-//
-//
-//        int result = states[host_choice][challenger_choice];
-//
-//        print(result);
-//
-//        if(result == 0){
-//          // game is tie
-//
-//        }else if(result == 1){
-//          // host is win
-//           games existingHostGames(get_self(), get_self().value);
-//           auto match_itr = existingHostGames.require_find( current_game.host.value,"Game does not exist.");
-//              // Get match
-////          auto match_itr = existing_games.require_find(current_game.index, "Game does not exist.");
-//
-//          existingHostGames.modify(match_itr, match_itr->host, [&](auto& g) {
-//            g.host_win_count += 1;
-//          });
-//
-//        }else if(result == 2) {
-//          //challenge is win
-//
-//           games existingHostGames(get_self(), get_self().value);
-//           auto match_itr = existingHostGames.require_find( current_game.host.value,"Game does not exist.");
-//
-////            auto match_itr = existing_games.require_find(current_game.index, "Game does not exist.");
-//
-//            existingHostGames.modify(match_itr, match_itr->host, [&](auto& g) {
-//              g.challenger_win_count += 1;
-//            });
-//        }
-//
-//        uint64_t amount = (uint64_t)(( current_game.host_bet + current_game.challenger_bet)*0.99);
-//
-//        asset a;
-//        a.set_amount(amount);
-//
-//        extended_asset award_asset(a,SYSTEM_TOKEN_CONTRACT);
-//
-//        print("deposit the winner result\n");
-//
-//        if(current_game.host_win_count > 1){
-//          // unint
-//
-//          transfer_to(current_game.host, award_asset, "winner prize");
-//
-//          return current_game.host;
-//        }
-//
-//        if(current_game.challenger_win_count > 1){
-//
-//          transfer_to(current_game.challenger, award_asset, "winner prize");
-//          return current_game.challenger;
-//        }
-//
-////        games existingHostGames(get_self(), get_self().value);
-////
-////        auto match_itr = existingHostGames.require_find( current_game.host.value,"Game does not exist.");
-////
-//////      auto match_itr = existing_games.require_find(current_game.index, "Game does not exist.");
-////
-////        existingHostGames.modify(match_itr, match_itr->host, [&](auto& g) {
-////                    g.newRound();
-////        });
-//      }
-//      // Draw if the board is full, otherwise the winner is not determined yet
-//      return  none;
-//   }
-
    void rps::send_balance(const name & winner,const game &current_game){
 
         uint64_t amount = (uint64_t)(( current_game.host_bet + current_game.challenger_bet)*0.98);
@@ -474,11 +350,6 @@ namespace proton
 
         print("deposit the winner result\n");
 
-//        if(current_game.host_win_count > 1){
-//          transfer_to(current_game.host, award_asset, "winner prize");
-//        }else if(current_game.challenger_win_count > 1){
-//          transfer_to(current_game.challenger, award_asset, "winner prize");
-//        }
    }
 
    void rps::ticker() {
@@ -580,101 +451,5 @@ namespace proton
    		// Return string
    		return result;
    }
-
-
-//   checksum256 decode_checksum(string hex)
-//   {
-//       checksum256 buffer;
-//
-//       int index = 0;
-//       while (index < hex.length()) {
-//           char c = hex[index];
-//
-//           int value = 0;
-//           if (c >= '0' && c <= '9')
-//               value = (c - '0');
-//           else if (c >= 'A' && c <= 'F')
-//               value = (10 + (c - 'A'));
-//           else if (c >= 'a' && c <= 'f')
-//               value = (10 + (c - 'a'));
-//
-//           buffer.hash[(index / 2)] += value << (((index + 1) % 2) * 4);
-//           index++;
-//       }
-//
-//       return buffer;
-//   }
-
-//   /* Convert a SHA256 sum (given as a string) to checksum256 object */
-//   bool hex2bin(const std::string& in, checksum256 &out)
-//   {
-//       if (in.size() != 64)
-//           return false;
-//
-//       std::string hex{"0123456789abcdef"};
-//       for (int i = 0; i < 32; i++) {
-//           auto d1 = hex.find(in[2*i]);
-//           auto d2 = hex.find(in[2*i+1]);
-//           if (d1 == std::string::npos || d2 == std::string::npos)
-//               return false;
-//
-//           // checksum256 is composed of little endian int128_t
-//           reinterpret_cast<char *>(out.data())[i/16*16 + 15-(i%16)] = (d1 << 4)  + d2;
-//       }
-//       return true;
-//   }
-
-   //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-   //------------------------------
-   //TOOLS for SHA256 convertation
-   //----------------------------
-//   string rps::SHA256toHEX(capi_checksum256 sha256) {
-//   	return conv2HEX((char*)sha256.hash, sizeof(sha256.hash));
-//   }
-//
-//   string rps::conv2HEX(char* hasha, uint32_t ssize) {
-//   	std::string res;
-//   	const char* hex = "0123456789abcdef";
-//
-//   	uint8_t* conv = (uint8_t*)hasha;
-//   	for (uint32_t i = 0; i < ssize; ++i)
-//   		(res += hex[(conv[i] >> 4)]) += hex[(conv[i] & 0x0f)];
-//   	return res;
-//   }
-//
-//   capi_checksum256 rps::HEX2SHA256(string hexstr) {
-//   	check(hexstr.length() == 64, "invalid sha256");
-//
-//   	capi_checksum256 cs;
-//   	convFromHEX(hexstr, (char*)cs.hash, sizeof(cs.hash));
-//   	return cs;
-//   }
-//
-//   uint8_t rps::convFromHEX(char ch) {
-//   	if (ch >= '0' && ch <= '9') return ch - '0';
-//   	if (ch >= 'a' && ch <= 'f') return ch - 'a' + 10;
-//   	if (ch >= 'A' && ch <= 'F') return ch - 'A' + 10;
-//
-//   	check(false, "Wrong hex symbol");
-//   	return 0;
-//   }
-//
-//   size_t rps::convFromHEX(string hexstr, char* res, size_t res_len) {
-//   	auto itr = hexstr.begin();
-//
-//   	uint8_t* rpos = (uint8_t*)res;
-//   	uint8_t* rend = rpos + res_len;
-//
-//   	while (itr != hexstr.end() && rend != rpos) {
-//   		*rpos = convFromHEX((char)(*itr)) << 4;
-//   		++itr;
-//   		if (itr != hexstr.end()) {
-//   			*rpos |= convFromHEX((char)(*itr));
-//   			++itr;
-//   		}
-//   		++rpos;
-//   	}
-//   	return rpos - (uint8_t*)res;
-//   }
 
 } // namepsace contract
