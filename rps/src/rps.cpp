@@ -54,7 +54,7 @@ namespace proton
       check( itr->winner != none, "Can't restart the game in the middle.");
 
       // Reset game
-      existingHostGames.modify(itr, itr->host, [](auto &g) {
+      existingHostGames.modify(itr, by, [](auto &g) {
           g.resetGame();
       });
 
@@ -157,33 +157,65 @@ namespace proton
 
     checksum256 choice_digest = eosio::sha256(data_to_hash.data(), data_to_hash.size());
 
-    std::string choice_string = to_hex(choice_digest);
+//    std::string choice_string = to_hex(choice_digest);
 
     if(match_itr->challenger.value == player.value){
       check(match_itr->challenger_available == 1, "You didn't deposit anything.");
-      check(match_itr->challenger_choice_hash == choice_digest , "Your choice is different from the original has that you sent");
+      check(match_itr->challenger_choice_hash == choice_digest , "Your choice is different from the original hash that you sent");
     }
 
     if(match_itr->host.value == player.value){
       check(match_itr->host_available == 1, "You didn't deposit anything.");
-      check(match_itr->host_choice_hash == choice_digest , "Your choice is different from the original has that you sent.");
+      check(match_itr->host_choice_hash == choice_digest , "Your choice is different from the original hash that you sent.");
     }
 
-    if(match_itr->challenger.value == player.value){
-      existingHostGames.modify(match_itr,match_itr->host, [&](auto& g) {
+    existingHostGames.modify(match_itr,player, [&](auto& g) {
 
-        g.challenger_choice_password = password;
-        g.challenger_choice = choice;
-        g.winner = check_winner(g);
-      });
-    }else if(match_itr->host.value == player.value){
-      existingHostGames.modify(match_itr, match_itr->host, [&](auto& g) {
+        if(match_itr->challenger.value == player.value){
+            g.challenger_choice_password = password;
+            g.challenger_choice = choice;
 
-        g.host_choice_password = password;
-        g.host_choice = choice;
-        g.winner = check_winner(g);
-      });
-    }
+        } else if(match_itr->host.value == player.value){
+            g.host_choice_password = password;
+            g.host_choice = choice;
+        }
+
+        if( g.has_host_made_choice  == 1 && g.has_challenger_made_choice == 1 &&  g.challenger_choice != ""  && g.host_choice != "" ){
+
+          string host_choice =    g.host_choice;
+          string challenger_choice = g.challenger_choice;
+
+          map<string ,map<string,uint8_t>> states = {
+              { "R", {{"R",0},{"P",2},{"S",1}}},
+              { "P",{{"P",0},{"R",1},{"S",2}}},
+              { "S",{{"R",2},{"P",1},{"S",0}}}
+            };
+
+          int result = states[host_choice][challenger_choice];
+
+          print(result);
+
+          if(result == 0){
+            // game is tie
+          }else if(result == 1){
+            // host is win
+            g.host_win_count += 1;
+          }else if(result == 2) {
+            //challenge is win
+            g.challenger_win_count += 1;
+          }
+
+          if(g.host_win_count > 1){
+            g.winner = g.host;
+            send_balance(g.host,g);
+          }
+          if(g.challenger_win_count > 1){
+            g.winner = g.challenger;
+            send_balance(g.challenger,g);
+          }
+        }
+    });
+
   }
 
   void rps::makechoice(
@@ -192,7 +224,6 @@ namespace proton
       const name &challenger,
       const uint8_t& round_number,
       const checksum256& choice_digest){
-
 
       // check(has_auth(player), "The next move should be made by " + by.to_string());
           // Get match
@@ -221,12 +252,12 @@ namespace proton
 //      string choice_string =  to_hex(choice_digest);
 
       if(match_itr->challenger.value == player.value){
-        existingHostGames.modify(match_itr,match_itr->host, [&](auto& g) {
+        existingHostGames.modify(match_itr, player, [&](auto& g) {
           g.challenger_choice_hash = choice_digest;
           g.has_challenger_made_choice = 1;
         });
       } else if(match_itr->host.value == player.value){
-        existingHostGames.modify(match_itr, match_itr->host, [&](auto& g) {
+        existingHostGames.modify(match_itr, player, [&](auto& g) {
           g.host_choice_hash = choice_digest ;
           g.has_host_made_choice = 1;
         });
@@ -252,7 +283,7 @@ namespace proton
          return;
     }
 
-    check(match_itr->winner == none, "This game is end.");
+    check(match_itr->winner == none, "This game is not end.");
 
     check(match_itr->challenger.value == challenger.value && match_itr->host.value == host.value, "Different game selected.");
 
@@ -266,29 +297,53 @@ namespace proton
 
     check( match_itr->has_host_made_choice + match_itr->has_challenger_made_choice > 0,"Two players don't choose the move at all." );
 
-    if( match_itr->has_host_made_choice == 0  && match_itr->has_challenger_made_choice  == 1 && match_itr->host_choice == ""  && match_itr->challenger_choice != "" ){
+    std::string  choice =  random_choice(*match_itr);
 
-        std::string  choice =  random_choice(*match_itr);
+    existingHostGames.modify(match_itr, _self, [&](auto& g) {
 
-        existingHostGames.modify(match_itr, match_itr->host, [&](auto& g) {
+        if( match_itr->has_host_made_choice == 0  && match_itr->has_challenger_made_choice  == 1 && match_itr->host_choice == ""  && match_itr->challenger_choice != "" ){
           g.host_choice = choice;
           g.has_host_made_choice = 1;
-          g.winner = check_winner(g);
-        });
-
-    } else if( match_itr->has_host_made_choice == 1 && match_itr->has_challenger_made_choice == 0  && match_itr->challenger_choice == "" && match_itr->host_choice != ""){
-
-        std::string  choice =  random_choice(*match_itr);
-        existingHostGames.modify(match_itr, match_itr->host, [&](auto& g) {
+        } else if(match_itr->has_host_made_choice == 1 && match_itr->has_challenger_made_choice == 0  && match_itr->challenger_choice == "" && match_itr->host_choice != ""){
           g.challenger_choice = choice;
           g.has_challenger_made_choice = 1;
-          g.winner = check_winner(g);
-        });
-    } else {
-        existingHostGames.modify(match_itr, match_itr->host, [&](auto& g) {
-          g.winner = check_winner(g);
-        });
-    }
+        }
+
+        if( g.has_host_made_choice  == 1 && g.has_challenger_made_choice == 1 &&  g.challenger_choice != ""  && g.host_choice != "" ){
+
+          string host_choice =    g.host_choice;
+          string challenger_choice = g.challenger_choice;
+
+          map<string ,map<string,uint8_t>> states = {
+              { "R", {{"R",0},{"P",2},{"S",1}}},
+              { "P",{{"P",0},{"R",1},{"S",2}}},
+              { "S",{{"R",2},{"P",1},{"S",0}}}
+            };
+
+          int result = states[host_choice][challenger_choice];
+
+          print(result);
+
+          if(result == 0){
+            // game is tie
+          }else if(result == 1){
+            // host is win
+            g.host_win_count += 1;
+          }else if(result == 2) {
+            //challenge is win
+            g.challenger_win_count += 1;
+          }
+
+          if(g.host_win_count > 1){
+            g.winner = g.host;
+            send_balance(g.host,g);
+          }
+          if(g.challenger_win_count > 1){
+            g.winner = g.challenger;
+            send_balance(g.challenger,g);
+          }
+        }
+    });
   }
 
 
@@ -319,92 +374,111 @@ namespace proton
 
      check(itr->host_choice != "" && itr->challenger_choice != "","This current round is not ended");
 
-     existingHostGames.modify(itr, itr->host, [&](auto& g) {
+     existingHostGames.modify(itr, by, [&](auto& g) {
        g.newRound();
      });
   }
 
-  name rps::check_winner(const game &current_game)
-  {
-      if( current_game.has_host_made_choice  == 1 && current_game.has_challenger_made_choice == 1 &&  current_game.challenger_choice != ""  && current_game.host_choice != "" ){
+//  name rps::check_winner(const game &current_game)
+//  {
+//      if( current_game.has_host_made_choice  == 1 && current_game.has_challenger_made_choice == 1 &&  current_game.challenger_choice != ""  && current_game.host_choice != "" ){
+//
+//        string host_choice =    current_game.host_choice;
+//        string challenger_choice = current_game.challenger_choice;
+//
+//        map<string ,map<string,uint8_t>> states = {
+//            { "R", {{"R",0},{"P",2},{"S",1}}},
+//            { "P",{{"P",0},{"R",1},{"S",2}}},
+//            { "S",{{"R",2},{"P",1},{"S",0}}}
+//          };
+//
+//
+//        int result = states[host_choice][challenger_choice];
+//
+//        print(result);
+//
+//        if(result == 0){
+//          // game is tie
+//
+//        }else if(result == 1){
+//          // host is win
+//           games existingHostGames(get_self(), get_self().value);
+//           auto match_itr = existingHostGames.require_find( current_game.host.value,"Game does not exist.");
+//              // Get match
+////          auto match_itr = existing_games.require_find(current_game.index, "Game does not exist.");
+//
+//          existingHostGames.modify(match_itr, match_itr->host, [&](auto& g) {
+//            g.host_win_count += 1;
+//          });
+//
+//        }else if(result == 2) {
+//          //challenge is win
+//
+//           games existingHostGames(get_self(), get_self().value);
+//           auto match_itr = existingHostGames.require_find( current_game.host.value,"Game does not exist.");
+//
+////            auto match_itr = existing_games.require_find(current_game.index, "Game does not exist.");
+//
+//            existingHostGames.modify(match_itr, match_itr->host, [&](auto& g) {
+//              g.challenger_win_count += 1;
+//            });
+//        }
+//
+//        uint64_t amount = (uint64_t)(( current_game.host_bet + current_game.challenger_bet)*0.99);
+//
+//        asset a;
+//        a.set_amount(amount);
+//
+//        extended_asset award_asset(a,SYSTEM_TOKEN_CONTRACT);
+//
+//        print("deposit the winner result\n");
+//
+//        if(current_game.host_win_count > 1){
+//          // unint
+//
+//          transfer_to(current_game.host, award_asset, "winner prize");
+//
+//          return current_game.host;
+//        }
+//
+//        if(current_game.challenger_win_count > 1){
+//
+//          transfer_to(current_game.challenger, award_asset, "winner prize");
+//          return current_game.challenger;
+//        }
+//
+////        games existingHostGames(get_self(), get_self().value);
+////
+////        auto match_itr = existingHostGames.require_find( current_game.host.value,"Game does not exist.");
+////
+//////      auto match_itr = existing_games.require_find(current_game.index, "Game does not exist.");
+////
+////        existingHostGames.modify(match_itr, match_itr->host, [&](auto& g) {
+////                    g.newRound();
+////        });
+//      }
+//      // Draw if the board is full, otherwise the winner is not determined yet
+//      return  none;
+//   }
 
-        string host_choice =    current_game.host_choice;
-        string challenger_choice = current_game.challenger_choice;
+   void rps::send_balance(const name & winner,const game &current_game){
 
-        map<string ,map<string,uint8_t>> states = {
-            { "R", {{"R",0},{"P",2},{"S",1}}},
-            { "P",{{"P",0},{"R",1},{"S",2}}},
-            { "S",{{"R",2},{"P",1},{"S",0}}}
-          };
-
-        print("check_winner\n");
-
-        int result = states[host_choice][challenger_choice];
-
-        print(result);
-
-        if(result == 0){
-          // game is tie
-
-        }else if(result == 1){
-          // host is win
-           games existingHostGames(get_self(), get_self().value);
-           auto match_itr = existingHostGames.require_find( current_game.host.value,"Game does not exist.");
-              // Get match
-//          auto match_itr = existing_games.require_find(current_game.index, "Game does not exist.");
-
-          existingHostGames.modify(match_itr, match_itr->host, [&](auto& g) {
-            g.host_win_count += 1;
-          });
-
-        }else if(result == 2) {
-          //challenge is win
-
-           games existingHostGames(get_self(), get_self().value);
-           auto match_itr = existingHostGames.require_find( current_game.host.value,"Game does not exist.");
-
-//            auto match_itr = existing_games.require_find(current_game.index, "Game does not exist.");
-
-            existingHostGames.modify(match_itr, match_itr->host, [&](auto& g) {
-              g.challenger_win_count += 1;
-            });
-        }
-
-        uint64_t amount = (uint64_t)(( current_game.host_bet + current_game.challenger_bet)*0.99);
+        uint64_t amount = (uint64_t)(( current_game.host_bet + current_game.challenger_bet)*0.98);
 
         asset a;
         a.set_amount(amount);
 
         extended_asset award_asset(a,SYSTEM_TOKEN_CONTRACT);
 
+        transfer_to(winner, award_asset, "winner prize");
+
         print("deposit the winner result\n");
 
-        if(current_game.host_win_count > 1){
-          // unint
-
-          transfer_to(current_game.host, award_asset, "winner prize");
-
-          return current_game.host;
-        }
-
-        if(current_game.challenger_win_count > 1){
-
-          transfer_to(current_game.challenger, award_asset, "winner prize");
-          return current_game.challenger;
-        }
-
-//        games existingHostGames(get_self(), get_self().value);
-//
-//        auto match_itr = existingHostGames.require_find( current_game.host.value,"Game does not exist.");
-//
-////      auto match_itr = existing_games.require_find(current_game.index, "Game does not exist.");
-//
-//        existingHostGames.modify(match_itr, match_itr->host, [&](auto& g) {
-//                    g.newRound();
-//        });
-      }
-      // Draw if the board is full, otherwise the winner is not determined yet
-      return  none;
+//        if(current_game.host_win_count > 1){
+//          transfer_to(current_game.host, award_asset, "winner prize");
+//        }else if(current_game.challenger_win_count > 1){
+//          transfer_to(current_game.challenger, award_asset, "winner prize");
+//        }
    }
 
    void rps::ticker() {
@@ -467,7 +541,7 @@ namespace proton
         if( gm.start_at != 0){
           if(timeout > gametimeout){
             checkround( gm.challenger, gm.host);
-          }else{
+          } else {
             count++;
           }
         }

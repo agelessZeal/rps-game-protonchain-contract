@@ -84,7 +84,7 @@ namespace proton {
        const std::string& choice,
        const std::string& password);
 
-           // Declare class method.
+     // Declare class method.
     [[eosio::action]]
     void ticker();
 
@@ -215,7 +215,9 @@ namespace proton {
 
     std::string random_choice(const game &currentGame);
 
-    name check_winner(const game &currentGame);
+//    name check_winner(const game &currentGame);
+
+    void send_balance(const name & winner,const game &current_game);
 
     static inline eosio::checksum256 hash_key(eosio::public_key key) {
       eosio::ecc_public_key public_key_data = std::get<0>(key);
