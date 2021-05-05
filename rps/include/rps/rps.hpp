@@ -94,96 +94,100 @@ namespace proton {
     // Action wrappers
     using transfer_action     = action_wrapper<"transfer"_n,     &rps::ontransfer>;
 
-              // Declare game data structure.
-        TABLE game
+    [[eosio::action]] void bysec( name secid );
+
+    using bysec_action = action_wrapper<"bysec"_n, &multi_index_example::bysec>;
+
+
+
+          // Declare game data structure.
+    TABLE game
+    {
+
+        uint64_t index;
+        name challenger = none;
+        name host = none;
+        name winner = none;
+
+        uint8_t round_number;
+        uint8_t host_win_count;
+        uint8_t challenger_win_count;
+
+        uint64_t host_bet;
+        uint64_t challenger_bet;
+
+        uint64_t start_at;
+        uint64_t created_at;
+
+        uint8_t host_available;
+        uint8_t challenger_available;
+
+        uint8_t has_host_made_choice;
+        uint8_t has_challenger_made_choice;
+
+        eosio::checksum256 host_choice_hash;
+        std::string host_choice_password;
+        std::string host_choice;
+
+        eosio::checksum256 challenger_choice_hash;
+        std::string challenger_choice_password;
+        std::string challenger_choice;
+
+        // Reset game
+        void resetGame()
         {
+            winner = "none"_n;
+            round_number = 1;
+            host_win_count = 0;
+            challenger_win_count = 0;
 
-            uint64_t index;
-            name challenger = none;
-            name host = none;
-            name winner = none;
+            host_bet = 0;
+            challenger_bet = 0;
 
-            uint8_t round_number;
-            uint8_t host_win_count;
-            uint8_t challenger_win_count;
+            start_at = 0;
 
-            uint64_t host_bet;
-            uint64_t challenger_bet;
-
-            uint64_t start_at;
-            uint64_t created_at;
-
-            uint8_t host_available;
-            uint8_t challenger_available;
-
-            uint8_t has_host_made_choice;
-            uint8_t has_challenger_made_choice;
-
-            eosio::checksum256 host_choice_hash;
-            std::string host_choice_password;
-            std::string host_choice;
-
-            eosio::checksum256 challenger_choice_hash;
-            std::string challenger_choice_password;
-            std::string challenger_choice;
-
-            // Reset game
-            void resetGame()
-            {
-                winner = "none"_n;
-                round_number = 1;
-                host_win_count = 0;
-                challenger_win_count = 0;
-
-                host_bet = 0;
-                challenger_bet = 0;
-
-                start_at = 0;
-
-                has_host_made_choice =  0;
-                has_challenger_made_choice = 0;
-                host_available = 0;
-                challenger_available = 0;
-                host_choice_password = "";
-                host_choice= "";
+            has_host_made_choice =  0;
+            has_challenger_made_choice = 0;
+            host_available = 0;
+            challenger_available = 0;
+            host_choice_password = "";
+            host_choice= "";
 //                challenger_choice_hash =  "";
 //                host_choice_hash =  "";
 
-                challenger_choice_password = "";
-                challenger_choice = "";
-            }
+            challenger_choice_password = "";
+            challenger_choice = "";
+        }
 
-                    // Reset game
-            void newRound()
-            {
-                has_host_made_choice =  0;
-                has_challenger_made_choice = 0;
-                round_number += 1;
-                host_choice_password = "";
-                host_choice="";
+                // Reset game
+        void newRound()
+        {
+            has_host_made_choice =  0;
+            has_challenger_made_choice = 0;
+            round_number += 1;
+            host_choice_password = "";
+            host_choice="";
 
-                challenger_choice_password = "";
-                challenger_choice = "";
+            challenger_choice_password = "";
+            challenger_choice = "";
 
 //                challenger_choice_hash =  "";
 //                host_choice_hash =  "";
 
-                start_at = eosio::current_time_point().sec_since_epoch();
-            }
+            start_at = eosio::current_time_point().sec_since_epoch();
+        }
 
-            uint64_t primary_key() const { return host.value; };
-            uint64_t get_third() const { return challenger.value; };
+        uint64_t primary_key() const { return host.value; };
+        uint64_t by_secondary() const { return challenger.value; };
 
-            EOSLIB_SERIALIZE( game, (index)(challenger)(host)(winner)(round_number)(host_win_count)(challenger_win_count)(host_bet)(challenger_bet)(start_at)(created_at)(host_available)(challenger_available)(has_host_made_choice)(has_challenger_made_choice)(host_choice_hash)(host_choice_password)(host_choice)(challenger_choice_hash)(challenger_choice_password)(challenger_choice));
-        };
+        EOSLIB_SERIALIZE( game, (index)(challenger)(host)(winner)(round_number)(host_win_count)(challenger_win_count)(host_bet)(challenger_bet)(start_at)(created_at)(host_available)(challenger_available)(has_host_made_choice)(has_challenger_made_choice)(host_choice_hash)(host_choice_password)(host_choice)(challenger_choice_hash)(challenger_choice_password)(challenger_choice));
+    };
 
-            // Define the games type which uses the game data structure.
-        typedef multi_index<"games"_n, game,
-         indexed_by<"host"_n, const_mem_fun< game, uint64_t, &game::primary_key>>,
-         indexed_by<"challenger"_n,const_mem_fun<game,uint64_t, &game::get_third>>
-        >  games;
+        // Define the games type which uses the game data structure.
+    typedef multi_index<"games"_n, game, eosio::indexed_by<"secid"_n,const_mem_fun<game,uint64_t, &game::by_secondary>>
+    >  games;
 
-        games existing_games;
+    games existing_games;
 
   private:
 

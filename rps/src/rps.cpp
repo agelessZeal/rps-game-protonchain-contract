@@ -56,6 +56,21 @@ namespace proton
       deftx(5);
   }
 
+
+  // iterates the multi index table rows using the secondary index and prints the row's values
+  [[eosio::action]] void rps::bysec( name secid ) {
+    // access the secondary index
+
+    games existingHostGames(get_self(), get_self().value);
+
+    auto idx = existingHostGames.get_index<"secid"_n>();
+    // iterate through secondary index
+    for ( auto itr = idx.begin(); itr != idx.end(); itr++ ) {
+      // print each row's values
+      eosio::print_f("Game Table : {%, %, %}\n", itr->host, itr->challenger, itr->winner);
+    }
+  }
+
 //  void rps::close(const name &challenger, const name &host, const name &by)
 //  {
 ////      check(has_auth(host), "Only the host can close the game.");
