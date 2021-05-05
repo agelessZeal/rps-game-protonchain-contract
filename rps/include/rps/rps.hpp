@@ -100,7 +100,7 @@ namespace proton {
 
     [[eosio::action]] void bysec( name secid );
 
-    using bysec_action = action_wrapper<"bysec"_n, &multi_index_example::bysec>;
+    using bysec_action = action_wrapper<"bysec"_n, &rps::bysec>;
 
 
 
