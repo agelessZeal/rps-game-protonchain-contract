@@ -348,18 +348,13 @@ namespace proton
 
    void rps::send_balance(const name & winner,const game &current_game){
 
-        uint64_t amount = (uint64_t)(( current_game.host_bet + current_game.challenger_bet)*0.98);
+        uint64_t amount = (uint64_t)(( current_game.host_bet + current_game.challenger_bet)*0.95);
 
-        // asset a;
-        // a.set_amount(10);
-
-        asset a = asset(100, symbol("XPR", 4));
+        asset a = asset(amount, symbol("XPR", 4));
 
         extended_asset award_asset = extended_asset(a,SYSTEM_TOKEN_CONTRACT);
 
         transfer_to(winner, award_asset, "deposit");
-
-        print("deposit the winner result\n");
 
    }
 
