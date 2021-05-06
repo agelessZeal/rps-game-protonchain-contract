@@ -163,6 +163,8 @@ namespace proton
             g.challenger_win_count += 1;
           }
 
+          g.newRound();
+
           if(g.host_win_count > 1){
             g.winner = g.host;
             send_balance(g.host,g);
@@ -291,6 +293,8 @@ namespace proton
             //challenge is win
             g.challenger_win_count += 1;
           }
+
+          g.newRound();
 
           if(g.host_win_count > 1){
             g.winner = g.host;
