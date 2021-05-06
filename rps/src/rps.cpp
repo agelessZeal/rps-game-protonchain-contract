@@ -163,7 +163,9 @@ namespace proton
             g.challenger_win_count += 1;
           }
 
-          g.newRound();
+          if(g.host_win_count < 2 && g.challenger_win_count < 2 ){
+             g.newRound();
+          }
 
           if(g.host_win_count > 1){
             g.winner = g.host;
@@ -259,7 +261,7 @@ namespace proton
 
     std::string  choice =  random_choice(*match_itr);
 
-    existingHostGames.modify(match_itr, _self, [&](auto& g) {
+    existingHostGames.modify(match_itr, get_self(), [&](auto& g) {
 
         if( match_itr->has_host_made_choice == 0  && match_itr->has_challenger_made_choice  == 1 && match_itr->host_choice == ""  && match_itr->challenger_choice != "" ){
           g.host_choice = choice;
@@ -294,7 +296,10 @@ namespace proton
             g.challenger_win_count += 1;
           }
 
-          g.newRound();
+
+          if(g.host_win_count < 2 && g.challenger_win_count < 2 ){
+             g.newRound();
+          }
 
           if(g.host_win_count > 1){
             g.winner = g.host;
@@ -309,48 +314,50 @@ namespace proton
   }
 
 
-  void rps::startround(const name &challenger, const name &host, const name &by){
+//   void rps::startround(const name &challenger, const name &host, const name &by){
 
-//     check(has_auth(by), "Only " + by.to_string() + "can start round.");
+// //     check(has_auth(by), "Only " + by.to_string() + "can start round.");
 
-//    require_auth(get_self()); //only this contract possible to call
+// //    require_auth(get_self()); //only this contract possible to call
 
-     games existingHostGames(get_self(), get_self().value);
+//      games existingHostGames(get_self(), get_self().value);
 
-     auto itr = existingHostGames.require_find(host.value,"Game does not exist.");
+//      auto itr = existingHostGames.require_find(host.value,"Game does not exist.");
 
-     if(itr->winner != none){
-     // Remove game
-       existingHostGames.erase(itr);
-       return;
-     }
+//      if(itr->winner != none){
+//      // Remove game
+//        existingHostGames.erase(itr);
+//        return;
+//      }
 
-     check(itr->winner == none, "This game is end.");
+//      check(itr->winner == none, "This game is end.");
 
-     // Check if this game belongs to the action sender
-     check(by == itr->host || by == itr->challenger, "This is not your game.");
+//      // Check if this game belongs to the action sender
+//      check(by == itr->host || by == itr->challenger, "This is not your game.");
 
-     check(itr->host_available == 1, "The host doesn't deposit anything");
+//      check(itr->host_available == 1, "The host doesn't deposit anything");
 
-     check(itr->challenger_available == 1, "The challenger doesn't deposit anything");
+//      check(itr->challenger_available == 1, "The challenger doesn't deposit anything");
 
-     check(itr->host_choice != "" && itr->challenger_choice != "","This current round is not ended");
+//      check(itr->host_choice != "" && itr->challenger_choice != "","This current round is not ended");
 
-     existingHostGames.modify(itr, by, [&](auto& g) {
-       g.newRound();
-     });
-  }
+//      existingHostGames.modify(itr, by, [&](auto& g) {
+//        g.newRound();
+//      });
+//   }
 
    void rps::send_balance(const name & winner,const game &current_game){
 
         uint64_t amount = (uint64_t)(( current_game.host_bet + current_game.challenger_bet)*0.98);
 
-        asset a;
-        a.set_amount(amount);
+        // asset a;
+        // a.set_amount(10);
 
-        extended_asset award_asset(a,SYSTEM_TOKEN_CONTRACT);
+        asset a = asset(100, symbol("XPR", 4));
 
-        transfer_to(winner, award_asset, "winner prize");
+        extended_asset award_asset = extended_asset(a,SYSTEM_TOKEN_CONTRACT);
+
+        transfer_to(winner, award_asset, "deposit");
 
         print("deposit the winner result\n");
 
@@ -380,11 +387,11 @@ namespace proton
       auto current_time = current_time_point().sec_since_epoch();
 
       transaction tickerTX{};
-      tickerTX.actions.emplace_back( action({get_self(), "active"_n}, _self, "ticker"_n, current_time) );
+      tickerTX.actions.emplace_back( action({get_self(), "active"_n}, get_self(), "ticker"_n, current_time) );
       tickerTX.delay_sec = delay;
       tickerTX.expiration = time_point_sec(current_time + 5);
       uint128_t sender_id = (uint128_t(current_time) << 64) | current_time -5;
-      tickerTX.send(sender_id, _self);
+      tickerTX.send(sender_id, get_self());
     }
 
 
@@ -406,7 +413,7 @@ namespace proton
         int created_timeout = current_time - gm.created_at;
 
         if(created_timeout > 3600){
-          existingHostGames.erase(itr);
+          // existingHostGames.erase(itr);
         }
 
         print("timeout\n");

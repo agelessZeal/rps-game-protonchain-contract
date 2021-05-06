@@ -1,32 +1,33 @@
 #include <rps/rps.hpp>
 #include <rps/constants.hpp>
 namespace proton {
-  void rps::add_balance (const name& account, const extended_asset& delta) {
+  void rps::add_balance (const name& account, const extended_asset& delta,const string& memo) {
 
 
     // Get match
+      name host = name(memo);
 
       games existingHostGames(get_self(), get_self().value);
 //      auto match_itr = existingHostGames.require_find(account.value,"Game does not exist.");
 
 //      auto match_itr = existingHostGames.begin();
 
-      auto match_itr = existingHostGames.find(account.value);
+      auto match_itr = existingHostGames.find(host.value);
 
-      if(match_itr == existingHostGames.end()){
+//       if(match_itr == existingHostGames.end()){
 
-        auto idx = existingHostGames.get_index<"secid"_n>();
-        // iterate through secondary index
-        for ( auto itr = idx.begin(); itr != idx.end(); itr++ ) {
-          // print each row's values
-//          eosio::print_f("Game Table : {%, %, %}\n", itr->host, itr->challenger, itr->winner);
+//         auto idx = existingHostGames.get_index<"secid"_n>();
+//         // iterate through secondary index
+//         for ( auto itr = idx.begin(); itr != idx.end(); itr++ ) {
+//           // print each row's values
+// //          eosio::print_f("Game Table : {%, %, %}\n", itr->host, itr->challenger, itr->winner);
 
-            if(itr->winner == none  && itr->challenger == account){
-                match_itr = existingHostGames.find(itr->host.value);
-                break;
-            }
-        }
-      }
+//             if(itr->winner == none  && itr->challenger == account){
+//                 match_itr = existingHostGames.find(itr->host.value);
+//                 break;
+//             }
+//         }
+//       }                                                     
 
       check(match_itr != existingHostGames.end(),"Your game is not found");
 

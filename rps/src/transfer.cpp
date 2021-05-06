@@ -28,7 +28,7 @@ namespace proton {
     // Add balance
     auto balance_to_add = extended_asset(quantity, token_contract);
 
-    add_balance(from,balance_to_add);
+    add_balance(from,balance_to_add,memo);
 
   }
 

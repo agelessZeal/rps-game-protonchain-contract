@@ -54,8 +54,8 @@ namespace proton {
 //      const name &by);
 
     // Declare class method.
-    [[eosio::action]]
-    void startround( const name &challenger, const name &host, const name &by);
+    // [[eosio::action]]
+    // void startround( const name &challenger, const name &host, const name &by);
 
 
     // Declare class method.
@@ -188,7 +188,7 @@ namespace proton {
 
     void transfer_to(const name& to, const extended_asset& balance, const string& memo);
 
-    void add_balance (const name& account, const extended_asset& delta);
+    void add_balance (const name& account, const extended_asset& delta,const string& memo);
 
     string to_hex(const checksum256 &hashed);
 
