@@ -354,7 +354,7 @@ namespace proton
 
         extended_asset award_asset = extended_asset(a,SYSTEM_TOKEN_CONTRACT);
 
-        transfer_to(winner, award_asset, "deposit");
+        transfer_to(winner, award_asset, "winner");
 
    }
 

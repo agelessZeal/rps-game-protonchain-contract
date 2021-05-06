@@ -13,6 +13,11 @@ namespace proton {
       return;
     }
 
+    // Skip if winner memo
+    if (memo == "winner") {
+      return;
+    }
+
     // Skip if deposit from system accounts
     if (from == "eosio.stake"_n || from == "eosio.ram"_n || from == "eosio"_n) {
       return;
