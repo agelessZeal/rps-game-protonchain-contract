@@ -18,12 +18,12 @@ namespace proton
 
       auto itr = existingHostGames.find(host.value);
       if(itr != existingHostGames.end() && itr->winner != none  && itr->challenger == challenger){
-         existingHostGames.modify(itr, itr->host, [](auto &g) {
+         existingHostGames.modify(itr, get_self(), [](auto &g) {
             g.resetGame();
          });
       }else{
         check(itr == existingHostGames.end(), "Game already exists.");
-        existingHostGames.emplace(host, [&](auto &g) {
+        existingHostGames.emplace(get_self(), [&](auto &g) {
             g.index = existingHostGames.available_primary_key();
             g.host = host;
             g.resetGame();
@@ -54,7 +54,7 @@ namespace proton
       check( itr->winner != none, "Can't restart the game in the middle.");
 
       // Reset game
-      existingHostGames.modify(itr, by, [](auto &g) {
+      existingHostGames.modify(itr, get_self(), [](auto &g) {
           g.resetGame();
       });
 
@@ -127,7 +127,7 @@ namespace proton
       check(match_itr->host_choice_hash == choice_digest , "Your choice is different from the original hash that you sent.");
     }
 
-    existingHostGames.modify(match_itr,player, [&](auto& g) {
+    existingHostGames.modify(match_itr,get_self(), [&](auto& g) {
 
         if(match_itr->challenger.value == player.value){
             g.challenger_choice_password = password;
@@ -214,12 +214,12 @@ namespace proton
 //      string choice_string =  to_hex(choice_digest);
 
       if(match_itr->challenger.value == player.value){
-        existingHostGames.modify(match_itr, player, [&](auto& g) {
+        existingHostGames.modify(match_itr, get_self(), [&](auto& g) {
           g.challenger_choice_hash = choice_digest;
           g.has_challenger_made_choice = 1;
         });
       } else if(match_itr->host.value == player.value){
-        existingHostGames.modify(match_itr, player, [&](auto& g) {
+        existingHostGames.modify(match_itr, get_self(), [&](auto& g) {
           g.host_choice_hash = choice_digest ;
           g.has_host_made_choice = 1;
         });

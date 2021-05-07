@@ -37,7 +37,7 @@ namespace proton {
         if(match_itr->challenger_bet != 0){
           check(delta.quantity.amount >= match_itr->challenger_bet, "Your host balance should not less than other's");
         }
-        existingHostGames.modify(match_itr, match_itr->host, [&](auto& g) {
+        existingHostGames.modify(match_itr, get_self(), [&](auto& g) {
           g.host_bet = delta.quantity.amount;
           g.host_available = 1;
 
@@ -51,7 +51,7 @@ namespace proton {
            check(delta.quantity.amount >= match_itr->host_bet, "Your challenger balance should not less than other's");
           }
 
-          existingHostGames.modify(match_itr, match_itr->host, [&](auto& g) {
+          existingHostGames.modify(match_itr, get_self(), [&](auto& g) {
             g.challenger_bet = delta.quantity.amount;
             g.challenger_available = 1;
             if( g.host_available == 1 ){

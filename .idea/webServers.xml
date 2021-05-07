@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="fdfb9ff4-97b4-4106-a24f-3193c628bf52" name="rps_contract" url="http://3.21.56.149">
+        <fileTransfer host="3.21.56.149" port="22" privateKey="E:\cc\2021\03\10_rpc_protongame\new_aws\new_proton_node.pem" accessType="SFTP" keyPair="true">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+          <option name="port" value="22" />
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>
