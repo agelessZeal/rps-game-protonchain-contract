@@ -85,8 +85,8 @@ namespace proton {
     [[eosio::action]]
     void checkwinner(
        const name &winner,
-       const uint64_t& game_index,
-       const std::string& game_id);
+       const uint64_t& game_index
+       );
 
 //    ACTION withdraw   ( const name& account,
 //                        const extended_asset& balance,

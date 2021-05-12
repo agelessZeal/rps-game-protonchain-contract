@@ -348,8 +348,7 @@ namespace proton
 
     void rps::checkwinner(
        const name &winner,
-       const uint64_t& game_index,
-       const std::string& game_id){
+       const uint64_t& game_index){
 
         require_auth(get_self()); //only this contract possible to call
 
