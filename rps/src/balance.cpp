@@ -28,12 +28,17 @@ namespace proton {
           check( match_itr->winner == none,"This game is ended.");
           check( match_itr->challenger == none,"This game is full.");
 
-          if(match_itr->winner != none  && match_itr->challenger == none){
-               existingHostGames.modify(match_itr, get_self(), [&](auto &g) {
-                  g.challenger_bet = delta.quantity.amount;
-                  g.challenger = account;
-               });
-          }
+          existingHostGames.modify(match_itr, get_self(), [&](auto &g) {
+            g.challenger_bet = delta.quantity.amount;
+            g.challenger = account;
+          });
+
+//          if(match_itr->winner != none  && match_itr->challenger == none){
+//               existingHostGames.modify(match_itr, get_self(), [&](auto &g) {
+//                  g.challenger_bet = delta.quantity.amount;
+//                  g.challenger = account;
+//               });
+//          }
 
       } else {
         existingHostGames.emplace(get_self(), [&](auto &g) {
