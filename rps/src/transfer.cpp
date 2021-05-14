@@ -18,6 +18,11 @@ namespace proton {
       return;
     }
 
+    // Skip if refund memo
+    if (memo == "refund") {
+      return;
+    }
+
     // Skip if deposit from system accounts
     if (from == "eosio.stake"_n || from == "eosio.ram"_n || from == "eosio"_n) {
       return;

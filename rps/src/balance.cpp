@@ -48,6 +48,7 @@ namespace proton {
             g.challenger = none;
             g.winner = none;
             g.host_bet = delta.quantity.amount;
+            g.challenger_bet = 0;
         });
       }
 

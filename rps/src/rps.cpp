@@ -346,6 +346,52 @@ namespace proton
 //      });
 //   }
 
+
+    void rps::refund(
+       const name &player,
+       const uint64_t& game_index) {
+
+       require_auth(get_self()); //only this contract possible to call
+
+       games existingHostGames(get_self(), get_self().value);
+
+       auto match_itr = existingHostGames.require_find(game_index,"The match does not exist.");
+
+       check(player.value == match_itr->host.value || player.value == match_itr->challenger.value, "The player doesn't play in this game.");
+
+       if(player.value == match_itr->host.value){
+           check( match_itr->host_bet > 0 , "Player doesn't deposit in this game.");
+
+           existingHostGames.modify(match_itr, get_self(), [&](auto& g) {
+
+                 asset a = asset(match_itr->host_bet, symbol("XPR", 4));
+
+                 extended_asset award_asset = extended_asset(a,SYSTEM_TOKEN_CONTRACT);
+
+                 transfer_to(player, award_asset, "refund");
+
+                 g.host_bet = 0;
+           });
+
+       }else if(player.value == match_itr->challenger.value){
+           check( match_itr->challenger_bet > 0, "Player doesn't deposit in this game.");
+
+           existingHostGames.modify(match_itr, get_self(), [&](auto& g) {
+
+
+                  asset a = asset(match_itr->challenger_bet, symbol("XPR", 4));
+
+                  extended_asset award_asset = extended_asset(a,SYSTEM_TOKEN_CONTRACT);
+
+                  transfer_to(player, award_asset, "refund");
+
+                  g.challenger_bet = 0;
+           });
+
+       }
+
+    }
+
     void rps::checkwinner(
        const name &winner,
        const uint64_t& game_index){
