@@ -91,7 +91,6 @@ namespace proton {
     // Declare class method.
     [[eosio::action]]
     void refund(
-       const name &player,
        const uint64_t& game_index
     );
 

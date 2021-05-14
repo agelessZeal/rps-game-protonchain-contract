@@ -348,7 +348,6 @@ namespace proton
 
 
     void rps::refund(
-       const name &player,
        const uint64_t& game_index) {
 
        require_auth(get_self()); //only this contract possible to call
@@ -357,38 +356,29 @@ namespace proton
 
        auto match_itr = existingHostGames.require_find(game_index,"The match does not exist.");
 
-       check(player.value == match_itr->host.value || player.value == match_itr->challenger.value, "The player doesn't play in this game.");
+       existingHostGames.modify(match_itr, get_self(), [&](auto& g) {
 
-       if(player.value == match_itr->host.value){
-           check( match_itr->host_bet > 0 , "Player doesn't deposit in this game.");
+          if(match_itr->host_bet > 0){
+              asset a = asset(match_itr->host_bet, symbol("XPR", 4));
 
-           existingHostGames.modify(match_itr, get_self(), [&](auto& g) {
+              extended_asset award_asset = extended_asset(a,SYSTEM_TOKEN_CONTRACT);
 
-                 asset a = asset(match_itr->host_bet, symbol("XPR", 4));
+              transfer_to(match_itr->host, award_asset, "refund");
 
-                 extended_asset award_asset = extended_asset(a,SYSTEM_TOKEN_CONTRACT);
+              g.host_bet = 0;
+          }
 
-                 transfer_to(player, award_asset, "refund");
+          if(match_itr->challenger_bet > 0){
+              asset a = asset(match_itr->challenger_bet, symbol("XPR", 4));
 
-                 g.host_bet = 0;
-           });
+              extended_asset award_asset = extended_asset(a,SYSTEM_TOKEN_CONTRACT);
 
-       }else if(player.value == match_itr->challenger.value){
-           check( match_itr->challenger_bet > 0, "Player doesn't deposit in this game.");
+              transfer_to(match_itr->challenger, award_asset, "refund");
 
-           existingHostGames.modify(match_itr, get_self(), [&](auto& g) {
+              g.challenger_bet = 0;
+          }
 
-
-                  asset a = asset(match_itr->challenger_bet, symbol("XPR", 4));
-
-                  extended_asset award_asset = extended_asset(a,SYSTEM_TOKEN_CONTRACT);
-
-                  transfer_to(player, award_asset, "refund");
-
-                  g.challenger_bet = 0;
-           });
-
-       }
+       });
 
     }
 
