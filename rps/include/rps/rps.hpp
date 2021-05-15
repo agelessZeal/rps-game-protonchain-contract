@@ -114,7 +114,7 @@ namespace proton {
     {
 
         uint64_t index;
-        std::string game_id;
+//        std::string game_id;
         name challenger = none;
         name host = none;
         name winner = none;
@@ -125,8 +125,9 @@ namespace proton {
         uint64_t primary_key() const { return index; };
         uint64_t by_secondary() const { return host.value; };
 
-        EOSLIB_SERIALIZE( game, (index)(game_id)(challenger)(host)(winner)(host_bet)(challenger_bet));
+        EOSLIB_SERIALIZE( game, (index)(challenger)(host)(winner)(host_bet)(challenger_bet));
     };
+
 
         // Define the games type which uses the game data structure.
     typedef multi_index<"games"_n, game, eosio::indexed_by<"secid"_n,const_mem_fun<game,uint64_t, &game::by_secondary>>

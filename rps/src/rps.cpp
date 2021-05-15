@@ -356,29 +356,48 @@ namespace proton
 
        auto match_itr = existingHostGames.require_find(game_index,"The match does not exist.");
 
-       existingHostGames.modify(match_itr, get_self(), [&](auto& g) {
+       if(match_itr->host_bet > 0){
+           asset a = asset(match_itr->host_bet, symbol("XPR", 4));
 
-          if(match_itr->host_bet > 0){
-              asset a = asset(match_itr->host_bet, symbol("XPR", 4));
+           extended_asset award_asset = extended_asset(a,SYSTEM_TOKEN_CONTRACT);
 
-              extended_asset award_asset = extended_asset(a,SYSTEM_TOKEN_CONTRACT);
+           transfer_to(match_itr->host, award_asset, "refund");
+       }
 
-              transfer_to(match_itr->host, award_asset, "refund");
+       if(match_itr->challenger_bet > 0){
+           asset a = asset(match_itr->challenger_bet, symbol("XPR", 4));
 
-              g.host_bet = 0;
-          }
+           extended_asset award_asset = extended_asset(a,SYSTEM_TOKEN_CONTRACT);
 
-          if(match_itr->challenger_bet > 0){
-              asset a = asset(match_itr->challenger_bet, symbol("XPR", 4));
+           transfer_to(match_itr->challenger, award_asset, "refund");
+       }
 
-              extended_asset award_asset = extended_asset(a,SYSTEM_TOKEN_CONTRACT);
+       existingHostGames.erase(match_itr);
 
-              transfer_to(match_itr->challenger, award_asset, "refund");
 
-              g.challenger_bet = 0;
-          }
-
-       });
+//       existingHostGames.modify(match_itr, get_self(), [&](auto& g) {
+//
+//          if(match_itr->host_bet > 0){
+//              asset a = asset(match_itr->host_bet, symbol("XPR", 4));
+//
+//              extended_asset award_asset = extended_asset(a,SYSTEM_TOKEN_CONTRACT);
+//
+//              transfer_to(match_itr->host, award_asset, "refund");
+//
+//              g.host_bet = 0;
+//          }
+//
+//          if(match_itr->challenger_bet > 0){
+//              asset a = asset(match_itr->challenger_bet, symbol("XPR", 4));
+//
+//              extended_asset award_asset = extended_asset(a,SYSTEM_TOKEN_CONTRACT);
+//
+//              transfer_to(match_itr->challenger, award_asset, "refund");
+//
+//              g.challenger_bet = 0;
+//          }
+//
+//       });
 
     }
 
@@ -396,10 +415,22 @@ namespace proton
 
         check( match_itr->host_bet > 0 && match_itr->challenger_bet > 0, "Both players don't deposit in this game.");
 
-        existingHostGames.modify(match_itr, get_self(), [&](auto& g) {
-              g.winner = winner;
-              send_balance(winner,g);
-        });
+
+//        existingHostGames.modify(match_itr, get_self(), [&](auto& g) {
+//              g.winner = winner;
+////              send_balance(winner,g);
+//        });
+
+        uint64_t amount = (uint64_t)(( match_itr->host_bet + match_itr->challenger_bet)*0.90);
+
+        asset a = asset(amount, symbol("XPR", 4));
+
+        extended_asset award_asset = extended_asset(a,SYSTEM_TOKEN_CONTRACT);
+
+        transfer_to(winner, award_asset, "winner");
+
+
+        existingHostGames.erase(match_itr);
     }
 
 

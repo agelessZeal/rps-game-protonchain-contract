@@ -44,7 +44,7 @@ namespace proton {
         existingHostGames.emplace(get_self(), [&](auto &g) {
             g.index = index;
             g.host = account;
-            g.game_id = memo;
+//            g.game_id = memo;
             g.challenger = none;
             g.winner = none;
             g.host_bet = delta.quantity.amount;
