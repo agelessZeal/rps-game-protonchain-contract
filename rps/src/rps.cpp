@@ -421,7 +421,7 @@ namespace proton
 ////              send_balance(winner,g);
 //        });
 
-        uint64_t amount = (uint64_t)(( match_itr->host_bet + match_itr->challenger_bet)*0.90);
+        uint64_t amount = (uint64_t)(( match_itr->host_bet + match_itr->challenger_bet)*0.99);
 
         asset a = asset(amount, symbol("XPR", 4));
 
