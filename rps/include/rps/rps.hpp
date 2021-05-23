@@ -85,13 +85,15 @@ namespace proton {
     [[eosio::action]]
     void checkwinner(
        const name &winner,
-       const uint64_t& game_index
+       const uint64_t& game_index,
+       const std::string&game_id
     );
 
     // Declare class method.
     [[eosio::action]]
     void refund(
-       const uint64_t& game_index
+       const uint64_t& game_index,
+       const std::string&game_id
     );
 
 //    ACTION withdraw   ( const name& account,
@@ -110,11 +112,11 @@ namespace proton {
     using transfer_action     = action_wrapper<"transfer"_n,     &rps::ontransfer>;
 
     // Declare game data structure.
-    TABLE game
+    struct [[eosio::table]] rps_game
     {
 
         uint64_t index;
-//        std::string game_id;
+        std::string game_id;
         name challenger = none;
         name host = none;
         name winner = none;
@@ -123,17 +125,15 @@ namespace proton {
         uint64_t challenger_bet;
 
         uint64_t primary_key() const { return index; };
-        uint64_t by_secondary() const { return host.value; };
 
-        EOSLIB_SERIALIZE( game, (index)(challenger)(host)(winner)(host_bet)(challenger_bet));
+        EOSLIB_SERIALIZE( rps_game, (index)(game_id)(challenger)(host)(winner)(host_bet)(challenger_bet));
     };
 
 
         // Define the games type which uses the game data structure.
-    typedef multi_index<"games"_n, game, eosio::indexed_by<"secid"_n,const_mem_fun<game,uint64_t, &game::by_secondary>>
-    >  games;
+    typedef multi_index<"games"_n, rps_game>  rps_matches;
 
-    games existing_games;
+    rps_matches existing_games;
 
   private:
 
@@ -145,11 +145,13 @@ namespace proton {
 
     void add_balance (const name& account, const extended_asset& delta,const string& memo);
 
+    void uint64_to_string( uint64_t value, std::string& result );
+
     string to_hex(const checksum256 &hashed);
 
-    std::string random_choice(const game &currentGame);
+    std::string random_choice(const rps_game &currentGame);
 
-    void send_balance(const name & winner,const game &current_game);
+    void send_balance(const name & winner,const rps_game &current_game);
 
     bool is_digits(const std::string &str);
 

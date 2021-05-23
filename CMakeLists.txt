@@ -46,7 +46,7 @@ else()
 endif()
 
 ExternalProject_Add(
-   atom
+   rps
    SOURCE_DIR ${CMAKE_SOURCE_DIR}/rps
    BINARY_DIR ${CMAKE_BINARY_DIR}/rps
    CMAKE_ARGS -DCMAKE_TOOLCHAIN_FILE=${EOSIO_CDT_ROOT}/lib/cmake/eosio.cdt/EosioWasmToolchain.cmake

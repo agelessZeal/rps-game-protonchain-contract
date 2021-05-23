@@ -1,10 +1,19 @@
-<h1 class="contract">create</h1>
+<h1 class="contract">checkwinner</h1>
 
 ---
 spec_version: "0.2.0"
-title: Create Ga,e
-summary: 'Create Game'
+title: CheckWinner
+summary: 'check winner'
 icon:
 ---
 .
 
+<h1 class="contract">refund</h1>
+
+---
+spec_version: "0.2.0"
+title: Refund
+summary: 'refund'
+icon:
+---
+.
