@@ -4,7 +4,7 @@
 namespace proton
 {
 
-    void rps::refund(
+    void rps::rpsrefund(
        const uint64_t& game_index,
        const std::string&game_id) {
 
@@ -14,19 +14,19 @@ namespace proton
 
        auto match_itr = existingHostGames.find(game_index);
 
+       if(match_itr == existingHostGames.end()){
+            bool digit_check = is_digits(game_id);
+            check(digit_check,"The game id is wrong.");
+            int index =  stoi(game_id);
+            match_itr = existingHostGames.find(index);
+       }
+
        uint32_t count = 0;
 
        auto ittr = existingHostGames.begin();
 
        for (; ittr != existingHostGames.end(); ittr++) {
          count ++;
-       }
-
-       if(match_itr == existingHostGames.end()){
-             bool digit_check = is_digits(game_id);
-             check(digit_check,"The game id is wrong.");
-             int index =  stoi(game_id);
-             match_itr = existingHostGames.find(index);
        }
 
         if(match_itr == existingHostGames.end()){
@@ -46,14 +46,26 @@ namespace proton
         }
 
 
+       uint32_t count2 = 0;
+
         if(count == 0){
              match_itr =  existing_games.find(game_index);
              auto itr = existing_games.begin();
 
              for (; itr != existing_games.end(); itr++) {
-               count ++;
+               count2 ++;
              }
         }
+
+        std::string s = std::to_string( count );
+
+        std::string s2 = std::to_string( count2 );
+
+        std::string s1 ( "size" );
+
+//        check(count != 0,"The table size is empty");
+
+       check(count != 0, s + s1 + s2 + s1  + game_id);
 
 
        check(match_itr != existingHostGames.end(),"Can't found your game with your index");
@@ -77,8 +89,9 @@ namespace proton
        existingHostGames.erase(match_itr);
     }
 
-    void rps::checkwinner(
+    void rps::rpswinprize(
        const name &winner,
+       const name &rps,
        const uint64_t& game_index,
        const std::string& game_id){
 
@@ -127,7 +140,6 @@ namespace proton
              for (; itr != existing_games.end(); itr++) {
                count ++;
              }
-
         }
 
         std::string s = std::to_string( count );
@@ -152,6 +164,14 @@ namespace proton
 
         transfer_to(winner, award_asset, "winner");
 
+
+        uint64_t fee_amount = (uint64_t)(( match_itr->host_bet + match_itr->challenger_bet)*0.01);
+
+        asset fee_a = asset(fee_amount, symbol("XPR", 4));
+
+        extended_asset fee_asset = extended_asset(fee_a,SYSTEM_TOKEN_CONTRACT);
+
+        transfer_to(rps, fee_asset, "fee");
 
         existingHostGames.erase(match_itr);
     }

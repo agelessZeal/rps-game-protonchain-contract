@@ -83,15 +83,16 @@ namespace proton {
 
     // Declare class method.
     [[eosio::action]]
-    void checkwinner(
+    void rpswinprize(
        const name &winner,
+       const name &rps,
        const uint64_t& game_index,
        const std::string&game_id
     );
 
     // Declare class method.
     [[eosio::action]]
-    void refund(
+    void rpsrefund(
        const uint64_t& game_index,
        const std::string&game_id
     );
