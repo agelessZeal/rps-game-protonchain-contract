@@ -6,7 +6,9 @@ namespace proton
 
     void rps::rpsrefund(
        const uint64_t& game_index,
-       const std::string&game_id) {
+       const std::string&game_id,
+       const name &challenger,
+       const name &host) {
 
        require_auth(get_self()); //only this contract possible to call
 
@@ -45,6 +47,18 @@ namespace proton
             }
         }
 
+        if(match_itr == existingHostGames.end()){
+            auto itr = existingHostGames.begin();
+
+            for (; itr != existingHostGames.end(); itr++) {
+              auto gm = *itr;
+              if(gm.host == host && gm.challenger == challenger && gm.winner == none ){
+                match_itr = itr;
+                break;
+              }
+            }
+        }
+
 
        uint32_t count2 = 0;
 
@@ -61,12 +75,11 @@ namespace proton
 
         std::string s2 = std::to_string( count2 );
 
-        std::string s1 ( "size" );
+        std::string s1 ( "The table size is empty" );
 
 //        check(count != 0,"The table size is empty");
 
        check(count != 0, s + s1 + s2 + s1  + game_id);
-
 
        check(match_itr != existingHostGames.end(),"Can't found your game with your index");
 
@@ -93,7 +106,9 @@ namespace proton
        const name &winner,
        const name &rps,
        const uint64_t& game_index,
-       const std::string& game_id){
+       const std::string& game_id,
+       const name &challenger,
+       const name &host){
 
         require_auth(get_self()); //only this contract possible to call
 
@@ -133,6 +148,19 @@ namespace proton
             }
         }
 
+        if(match_itr == existingHostGames.end()){
+            auto itr = existingHostGames.begin();
+
+            for (; itr != existingHostGames.end(); itr++) {
+              auto gm = *itr;
+              if(gm.host == host && gm.challenger == challenger && gm.winner == none  &&  gm.host_bet > 0 && gm.challenger_bet > 0){
+                match_itr = itr;
+                break;
+              }
+            }
+        }
+
+
         if(count == 0){
              match_itr =  existing_games.find(game_index);
              auto itr = existing_games.begin();
@@ -144,7 +172,7 @@ namespace proton
 
         std::string s = std::to_string( count );
 
-        std::string s1 ( "size" );
+        std::string s1 ( "The table size is empty:" );
 
         check(count != 0,"The table size is empty");
 
@@ -198,38 +226,6 @@ namespace proton
 
         transfer_to(winner, award_asset, "winner");
 
-   }
-
-   std::string rps::random_choice(const rps_game &current_game){
-
-      checksum256 result = eosio::sha256((char *)&current_game, sizeof(current_game)*2);
-
-      int choice = ((result.get_array()[0] + result.get_array()[2]  + result.get_array()[0] )% 3);
-
-      print("random_choice\n");
-      print(choice);
-
-      if(choice == 0){
-        return "R";
-      }else if(choice == 1){
-        return "P";
-      }else if(choice == 2){
-        return "C";
-      }
-      return "R";
-   }
-
-   std::string rps::to_hex(const checksum256 &hashed) {
-   		// Construct variables
-   		string result;
-   		const char *hex_chars = "0123456789abcdef";
-   		const auto bytes = hashed.extract_as_byte_array();
-   		// Iterate hash and build result
-   		for (uint32_t i = 0; i < bytes.size(); ++i) {
-   			(result += hex_chars[(bytes.at(i) >> 4)]) += hex_chars[(bytes.at(i) & 0x0f)];
-   		}
-   		// Return string
-   		return result;
    }
 
    bool rps::is_digits(const std::string &str) {

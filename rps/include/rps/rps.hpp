@@ -34,72 +34,25 @@ namespace proton {
     static constexpr name draw = "draw"_n;
     static constexpr uint8_t gametimeout = 5;
 
-//    // Declare class method.
-//    [[eosio::action]]
-//    void create(name &host,name &challenger);
-
-//    // Declare class method.
-//    [[eosio::action]]
-//    void restart(const name &challenger, const name &host, const name &by);
-
-//    // Declare class method.
-//    [[eosio::action]]
-//    void checkround(const name &challenger, const name &host);
-
-//    // Declare class method.
-//    [[eosio::action]]
-//    void close(
-//      const name &challenger,
-//      const name &host,
-//      const name &by);
-
-    // Declare class method.
-    // [[eosio::action]]
-    // void startround( const name &challenger, const name &host, const name &by);
-
-
-//    // Declare class method.
-//    [[eosio::action]]
-//    void makechoice(
-//       const name &player,
-//       const name &host,
-//       const name &challenger,
-//       const uint8_t& round_number,
-//       const eosio::checksum256& choice_digest);
-
-//    // Declare class method.
-//    [[eosio::action]]
-//    void unlockchoice(
-//       const name &player,
-//       const name &host,
-//       const name &challenger,
-//       const uint8_t& round_number,
-//       const std::string& choice,
-//       const std::string& password);
-
-//     // Declare class method.
-//    [[eosio::action]]
-//    void ticker();
-
     // Declare class method.
     [[eosio::action]]
     void rpswinprize(
        const name &winner,
        const name &rps,
        const uint64_t& game_index,
-       const std::string&game_id
+       const std::string&game_id,
+       const name &challenger,
+       const name &host
     );
 
     // Declare class method.
     [[eosio::action]]
     void rpsrefund(
        const uint64_t& game_index,
-       const std::string&game_id
+       const std::string&game_id,
+       const name &challenger,
+       const name &host
     );
-
-//    ACTION withdraw   ( const name& account,
-//                        const extended_asset& balance,
-//                        const std::string& game);
 
     // This function will be called when the contract is notified of incoming or outgoing transfer actions from any contract
     [[eosio::on_notify("*::transfer")]]
@@ -130,17 +83,12 @@ namespace proton {
         EOSLIB_SERIALIZE( rps_game, (index)(game_id)(challenger)(host)(winner)(host_bet)(challenger_bet));
     };
 
-
-        // Define the games type which uses the game data structure.
+    // Define the games type which uses the game data structure.
     typedef multi_index<"games"_n, rps_game>  rps_matches;
 
     rps_matches existing_games;
 
   private:
-
-//    uint32_t checkgames();
-//
-//    void deftx(uint64_t delay );
 
     void transfer_to(const name& to, const extended_asset& balance, const string& memo);
 
@@ -156,9 +104,5 @@ namespace proton {
 
     bool is_digits(const std::string &str);
 
-    static inline eosio::checksum256 hash_key(eosio::public_key key) {
-      eosio::ecc_public_key public_key_data = std::get<0>(key);
-      return eosio::sha256(public_key_data.data(), public_key_data.size());
-    }
   };
 }
