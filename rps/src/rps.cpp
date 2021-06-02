@@ -81,7 +81,10 @@ namespace proton
 
        check(count != 0, s + s1 + s2 + s1  + game_id);
 
-       check(match_itr != existingHostGames.end(),"Can't found your game with your index");
+       std::string s3 ( "Can't found your game with your index:" );
+
+       check(match_itr != existingHostGames.end(), s3 + s);
+
 
        if(match_itr->host_bet > 0){
            asset a = asset(match_itr->host_bet, symbol("XPR", 4));
@@ -178,7 +181,9 @@ namespace proton
 
 //        check(false, s + s1 +  game_id);
 
-        check(match_itr != existingHostGames.end(),"Can't found your game with your index");
+        std::string s2 ( "Can't found your game with your index:" );
+
+        check(match_itr != existingHostGames.end(), s2 + s);
 
         check(winner.value == match_itr->host.value || winner.value == match_itr->challenger.value, "The winner doesn't play in this game.");
 
