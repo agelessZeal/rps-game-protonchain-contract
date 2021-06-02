@@ -55,6 +55,9 @@ namespace proton
               if(gm.host == host && gm.challenger == challenger && gm.winner == none ){
                 match_itr = itr;
                 break;
+              } else if(gm.host == challenger && gm.challenger == host && gm.winner == none){
+                match_itr = itr;
+                break;
               }
             }
         }
@@ -156,9 +159,15 @@ namespace proton
 
             for (; itr != existingHostGames.end(); itr++) {
               auto gm = *itr;
-              if(gm.host == host && gm.challenger == challenger && gm.winner == none  &&  gm.host_bet > 0 && gm.challenger_bet > 0){
-                match_itr = itr;
-                break;
+
+              if(gm.winner == none  &&  gm.host_bet > 0 && gm.challenger_bet > 0){
+                  if(gm.host == host && gm.challenger == challenger){
+                    match_itr = itr;
+                    break;
+                  }else if(gm.host == challenger && gm.challenger == host){
+                    match_itr = itr;
+                    break;
+                  }
               }
             }
         }
