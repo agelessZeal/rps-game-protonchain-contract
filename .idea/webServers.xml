@@ -2,8 +2,8 @@
 <project version="4">
   <component name="WebServers">
     <option name="servers">
-      <webServer id="fdfb9ff4-97b4-4106-a24f-3193c628bf52" name="rps_contract" url="http://3.142.68.124">
-        <fileTransfer host="3.142.68.124" port="22" privateKey="E:\cc\2021\03\10_rpc_protongame\new_aws\new_proton_node.pem" accessType="SFTP" keyPair="true">
+      <webServer id="fdfb9ff4-97b4-4106-a24f-3193c628bf52" name="rps_contract" url="http://3.15.177.165">
+        <fileTransfer host="3.15.177.165" port="22" privateKey="E:\cc\2021\03\10_rpc_protongame\new_aws\new_proton_node.pem" accessType="SFTP" keyPair="true">
           <advancedOptions>
             <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
           </advancedOptions>

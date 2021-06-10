@@ -84,10 +84,11 @@ namespace proton
 
        check(count != 0, s + s1 + s2 + s1  + game_id);
 
-       std::string s3 ( "Can't found your game with your index:" );
+       std::string s3 ( "Refund: Can't found your game with your index, table size:" );
 
-       check(match_itr != existingHostGames.end(), s3 + s);
+//       check(match_itr != existingHostGames.end(), s3 + s);
 
+        check(match_itr != existingHostGames.end(), game_id +  s3 + s );
 
        if(match_itr->host_bet > 0){
            asset a = asset(match_itr->host_bet, symbol("XPR", 4));
@@ -186,13 +187,15 @@ namespace proton
 
         std::string s1 ( "The table size is empty:" );
 
-        check(count != 0,"The table size is empty");
+//        check(count != 0,"The table size is empty");
+
+        check(count != 0, s + s1 + game_id);
 
 //        check(false, s + s1 +  game_id);
 
-        std::string s2 ( "Can't found your game with your index:" );
+        std::string s2 ( " Prize Can't found your game with your index:" );
 
-        check(match_itr != existingHostGames.end(), s2 + s);
+        check(match_itr != existingHostGames.end(), game_id +  s2 + s);
 
         check(winner.value == match_itr->host.value || winner.value == match_itr->challenger.value, "The winner doesn't play in this game.");
 
